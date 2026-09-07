@@ -33,3 +33,10 @@ shared contracts library;
 воспроизводимую генерацию;
 ссылки на task.proto и generate-proto.cjs;
 unary RPC пока не отмечай как VERIFIED — он только описан, но ещё не запущен.
+
+gRPC-only bootstrap;
+unary server implementation;
+ручная проверка через Postman;
+успешный optional description;
+INVALID_ARGUMENT для пустого title;
+ссылки на main.ts, task.controller.ts, task.service.ts.

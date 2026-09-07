@@ -10,6 +10,8 @@
     "proto:generate": "node scripts/generate-proto.cjs",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
+    "build:task-service": "nest build task-service && node scripts/copy-task-proto.cjs",
+    "start:task-service": "pnpm run build:task-service && node dist/apps/task-service/main.js",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/api-gateway/main",
