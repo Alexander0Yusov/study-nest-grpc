@@ -7,6 +7,9 @@ import {
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception/http-exception.filter';
 
+import { ConfigType } from '@nestjs/config';
+import { appConfig } from './config/app.config';
+
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
@@ -24,8 +27,11 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  await app.listen(process.env.PORT ?? 3000);
+  const config = app.get<ConfigType<typeof appConfig>>(appConfig.KEY);
+
+  await app.listen(config.port, config.host);
 }
 bootstrap();
