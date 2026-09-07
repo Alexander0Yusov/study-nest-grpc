@@ -167,3 +167,15 @@ unary server implementation;
 успешный optional description;
 INVALID_ARGUMENT для пустого title;
 ссылки на main.ts, task.controller.ts, task.service.ts.
+
+единый .proto-контракт из libs/contracts;
+копирование runtime .proto для обоих приложений;
+ClientsModule.registerAsync() в Gateway;
+DI-токен TASK_SERVICE_NAME из generated-контракта;
+ClientGrpc и типизированный TaskServiceClient;
+инициализация stub в onModuleInit();
+unary-вызов через firstValueFrom();
+маршрут POST /tasks → gRPC CreateTask;
+глобальный gRPC→HTTP mapping в Gateway;
+глобальный RpcExceptionFilter в Task Service;
+сокрытие внутренних ошибок.

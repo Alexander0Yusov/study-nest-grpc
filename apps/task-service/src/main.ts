@@ -8,6 +8,7 @@ import { STUDY_TASKS_V1_PACKAGE_NAME } from '@app/contracts';
 
 import { loadTaskServiceConfig } from './config/task-service.config';
 import { TaskServiceModule } from './task-service.module';
+import { RpcExceptionFilter } from './common/filters/rpc-exception/rpc-exception.filter';
 
 const logger = new Logger('TaskServiceBootstrap');
 
@@ -27,6 +28,8 @@ async function bootstrap(): Promise<void> {
       },
     },
   );
+
+  app.useGlobalFilters(new RpcExceptionFilter());
 
   await app.listen();
 
