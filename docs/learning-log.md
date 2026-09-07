@@ -25,3 +25,11 @@
 - **Результат:**
 - **Закрытые course IDs:**
 - **Технический долг:**
+
+** 07-09-2026
+protoc 36.0 + ts-proto 2.12.2;
+shared contracts library;
+импорт google.protobuf.Timestamp;
+воспроизводимую генерацию;
+ссылки на task.proto и generate-proto.cjs;
+unary RPC пока не отмечай как VERIFIED — он только описан, но ещё не запущен.
