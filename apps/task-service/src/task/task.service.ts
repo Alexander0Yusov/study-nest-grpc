@@ -3,15 +3,35 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RpcException } from '@nestjs/microservices';
 
-import { CreateTaskRequest, CreateTaskResponse, Task } from '@app/contracts';
+import { isUUID } from 'class-validator';
+
+import {
+  CreateTaskRequest,
+  CreateTaskResponse,
+  Task,
+  TaskStatus as ProtoTaskStatus,
+  UpdateTaskStatusRequest,
+  UpdateTaskStatusesResponse,
+} from '@app/contracts';
 
 import { Repository } from 'typeorm';
 
 import { TaskEntity } from './entities/task.entity';
-import { TaskStatus } from './enums/task-status.enum';
+import { TaskStatus as PersistenceTaskStatus } from './enums/task-status.enum';
 import { toProtoTask } from './mappers/task.proto.mapper';
 
-import { defer, from, map, mergeMap, Observable, tap } from 'rxjs';
+import {
+  defer,
+  from,
+  map,
+  mergeMap,
+  Observable,
+  tap,
+  take,
+  toArray,
+} from 'rxjs';
+
+const MAX_STATUS_UPDATE_BATCH_SIZE = 500;
 
 @Injectable()
 export class TaskService {
@@ -35,7 +55,7 @@ export class TaskService {
     const entity = this.taskRepository.create({
       title,
       description: request.description?.trim() || null,
-      status: TaskStatus.PENDING,
+      status: PersistenceTaskStatus.PENDING,
     });
 
     const savedTask = await this.taskRepository.save(entity);
@@ -77,5 +97,138 @@ export class TaskService {
         },
       }),
     );
+  }
+
+  updateTaskStatuses(
+    requests$: Observable<UpdateTaskStatusRequest>,
+  ): Observable<UpdateTaskStatusesResponse> {
+    let receivedCount = 0;
+
+    this.logger.log('[UpdateTaskStatuses] Client stream started');
+
+    return requests$.pipe(
+      tap(() => {
+        receivedCount += 1;
+        this.logger.log(
+          `[UpdateTaskStatuses] Received message ${receivedCount}`,
+        );
+      }),
+      take(MAX_STATUS_UPDATE_BATCH_SIZE + 1),
+      toArray(),
+      mergeMap(async (requests) => {
+        return this.processTaskStatusUpdates(requests);
+      }),
+    );
+  }
+
+  private async processTaskStatusUpdates(
+    requests: UpdateTaskStatusRequest[],
+  ): Promise<UpdateTaskStatusesResponse> {
+    if (requests.length === 0) {
+      throw new RpcException({
+        code: status.INVALID_ARGUMENT,
+        message: 'Status update stream must not be empty',
+      });
+    }
+
+    if (requests.length > MAX_STATUS_UPDATE_BATCH_SIZE) {
+      throw new RpcException({
+        code: status.RESOURCE_EXHAUSTED,
+        message: `Status update batch must not exceed ${MAX_STATUS_UPDATE_BATCH_SIZE} tasks`,
+      });
+    }
+
+    const ids: string[] = [];
+    const uniqueIds = new Set<string>();
+    let requestedStatus: ProtoTaskStatus | undefined;
+
+    for (const request of requests) {
+      const id = request.id?.trim();
+
+      if (!id || !isUUID(id, '4')) {
+        throw new RpcException({
+          code: status.INVALID_ARGUMENT,
+          message: 'Every task id must be a valid UUID v4',
+        });
+      }
+
+      if (uniqueIds.has(id)) {
+        throw new RpcException({
+          code: status.INVALID_ARGUMENT,
+          message: `Duplicate task id: ${id}`,
+        });
+      }
+
+      if (
+        request.status !== ProtoTaskStatus.TASK_STATUS_PENDING &&
+        request.status !== ProtoTaskStatus.TASK_STATUS_IN_PROGRESS &&
+        request.status !== ProtoTaskStatus.TASK_STATUS_COMPLETED
+      ) {
+        throw new RpcException({
+          code: status.INVALID_ARGUMENT,
+          message: 'Every task must contain a supported status',
+        });
+      }
+
+      if (requestedStatus === undefined) {
+        requestedStatus = request.status;
+      } else if (request.status !== requestedStatus) {
+        throw new RpcException({
+          code: status.INVALID_ARGUMENT,
+          message: 'All tasks in one batch must have the same status',
+        });
+      }
+
+      uniqueIds.add(id);
+      ids.push(id);
+    }
+
+    if (requestedStatus === undefined) {
+      throw new RpcException({
+        code: status.INVALID_ARGUMENT,
+        message: 'Task status is required',
+      });
+    }
+
+    const persistenceStatus = this.toPersistenceStatus(requestedStatus);
+
+    const result = await this.taskRepository
+      .createQueryBuilder()
+      .update(TaskEntity)
+      .set({ status: persistenceStatus })
+      .where('id IN (:...ids)', { ids })
+      .execute();
+
+    const updatedCount = result.affected ?? 0;
+
+    this.logger.log(
+      `[UpdateTaskStatuses] Completed: requested=${ids.length}; updated=${updatedCount}`,
+    );
+
+    return {
+      requestedCount: ids.length,
+      updatedCount,
+    };
+  }
+
+  private toPersistenceStatus(
+    statusValue: ProtoTaskStatus,
+  ): PersistenceTaskStatus {
+    switch (statusValue) {
+      case ProtoTaskStatus.TASK_STATUS_PENDING:
+        return PersistenceTaskStatus.PENDING;
+
+      case ProtoTaskStatus.TASK_STATUS_IN_PROGRESS:
+        return PersistenceTaskStatus.IN_PROGRESS;
+
+      case ProtoTaskStatus.TASK_STATUS_COMPLETED:
+        return PersistenceTaskStatus.COMPLETED;
+
+      default:
+        throw new RpcException({
+          code: status.INVALID_ARGUMENT,
+          message: 'Unsupported task status',
+        });
+    }
   }
 }

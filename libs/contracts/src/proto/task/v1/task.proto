@@ -31,9 +31,23 @@ message CreateTaskResponse {
 
 message StreamTasksRequest {}
 
+message UpdateTaskStatusRequest {
+  string id = 1;
+  TaskStatus status = 2;
+}
+
+message UpdateTaskStatusesResponse {
+  uint32 requested_count = 1;
+  uint32 updated_count = 2;
+}
+
 service TaskService {
   rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
 
   // Returns a finite snapshot of all tasks.
   rpc StreamTasks(StreamTasksRequest) returns (stream Task);
+
+  // Updates multiple tasks using a client request stream.
+  rpc UpdateTaskStatuses(stream UpdateTaskStatusRequest)
+  returns (UpdateTaskStatusesResponse);
 }

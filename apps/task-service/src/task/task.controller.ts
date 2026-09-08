@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
 
 import {
   CreateTaskRequest,
@@ -9,10 +9,12 @@ import {
   TASK_SERVICE_NAME,
   TaskServiceController as TaskServiceControllerContract,
   TaskServiceControllerMethods,
+  UpdateTaskStatusesResponse,
+  UpdateTaskStatusRequest,
 } from '@app/contracts';
 
 import { TaskService } from './task.service';
-import { Observable } from 'rxjs/internal/Observable';
+import { Observable } from 'rxjs';
 
 @Controller()
 @TaskServiceControllerMethods()
@@ -27,5 +29,12 @@ export class TaskController implements TaskServiceControllerContract {
   @GrpcMethod(TASK_SERVICE_NAME, 'StreamTasks')
   streamTasks(_request: StreamTasksRequest): Observable<Task> {
     return this.taskService.streamTasks();
+  }
+
+  @GrpcStreamMethod(TASK_SERVICE_NAME, 'UpdateTaskStatuses')
+  updateTaskStatuses(
+    requests: Observable<UpdateTaskStatusRequest>,
+  ): Observable<UpdateTaskStatusesResponse> {
+    return this.taskService.updateTaskStatuses(requests);
   }
 }

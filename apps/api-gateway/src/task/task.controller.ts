@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Patch } from '@nestjs/common';
 import { CreateTaskRequestDto } from './dto/create-task-request.dto';
 import { TaskService } from './task.service';
 import { toTaskResponseDto } from './mappers/task-http.mapper';
 import { TaskResponseDto } from './dto/task-response.dto';
+import { UpdateTaskStatusesResponse } from '../../../../libs/contracts/src';
+import { UpdateTaskStatusesRequestDto } from './dto/update-task-statuses-request.dto';
 
 @Controller('tasks')
 export class TaskController {
@@ -18,5 +20,12 @@ export class TaskController {
     const items = await this.taskService.getTasks();
 
     return { items: items.map(toTaskResponseDto) };
+  }
+
+  @Patch('status')
+  updateTaskStatuses(
+    @Body() dto: UpdateTaskStatusesRequestDto,
+  ): Promise<UpdateTaskStatusesResponse> {
+    return this.taskService.updateTaskStatuses(dto);
   }
 }
