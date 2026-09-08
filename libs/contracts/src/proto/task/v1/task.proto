@@ -29,6 +29,11 @@ message CreateTaskResponse {
   Task task = 1;
 }
 
+message StreamTasksRequest {}
+
 service TaskService {
   rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
+
+  // Returns a finite snapshot of all tasks.
+  rpc StreamTasks(StreamTasksRequest) returns (stream Task);
 }
