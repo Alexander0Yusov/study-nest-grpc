@@ -12,6 +12,9 @@ import {
   TaskStatus as ProtoTaskStatus,
   UpdateTaskStatusRequest,
   UpdateTaskStatusesResponse,
+  DeleteTaskErrorCode,
+  DeleteTaskRequest,
+  DeleteTaskResponse,
 } from '@app/contracts';
 
 import { Repository } from 'typeorm';
@@ -19,6 +22,10 @@ import { Repository } from 'typeorm';
 import { TaskEntity } from './entities/task.entity';
 import { TaskStatus as PersistenceTaskStatus } from './enums/task-status.enum';
 import { toProtoTask } from './mappers/task.proto.mapper';
+import {
+  DeletedTaskRow,
+  toTaskEntityFromDeletedRow,
+} from './mappers/deleted-task-row.mapper';
 
 import {
   defer,
@@ -29,6 +36,8 @@ import {
   tap,
   take,
   toArray,
+  concatMap,
+  of,
 } from 'rxjs';
 
 const MAX_STATUS_UPDATE_BATCH_SIZE = 500;
@@ -230,5 +239,117 @@ export class TaskService {
           message: 'Unsupported task status',
         });
     }
+  }
+
+  deleteTasks(
+    requests$: Observable<DeleteTaskRequest>,
+  ): Observable<DeleteTaskResponse> {
+    const startedAt = Date.now();
+    const processedIds = new Set<string>();
+
+    let receivedCount = 0;
+    let sentCount = 0;
+
+    this.logger.log('[DeleteTasks] Bidirectional stream started');
+
+    return requests$.pipe(
+      concatMap((request, index) => {
+        receivedCount = index + 1;
+
+        this.logger.log(`[DeleteTasks] Received message ${receivedCount}`);
+
+        if (receivedCount > MAX_STATUS_UPDATE_BATCH_SIZE) {
+          throw new RpcException({
+            code: status.RESOURCE_EXHAUSTED,
+            message: `Delete batch must not exceed ${MAX_STATUS_UPDATE_BATCH_SIZE} tasks`,
+          });
+        }
+
+        const requestedId = request.id?.trim() ?? '';
+
+        if (!isUUID(requestedId, '4')) {
+          return of(
+            this.createDeleteErrorResponse(
+              requestedId,
+              DeleteTaskErrorCode.DELETE_TASK_ERROR_CODE_INVALID_ARGUMENT,
+              'Task id must be a valid UUID v4',
+            ),
+          );
+        }
+
+        if (processedIds.has(requestedId)) {
+          return of(
+            this.createDeleteErrorResponse(
+              requestedId,
+              DeleteTaskErrorCode.DELETE_TASK_ERROR_CODE_DUPLICATE,
+              'Task id is duplicated in the stream',
+            ),
+          );
+        }
+
+        processedIds.add(requestedId);
+
+        return defer(() => this.deleteTaskById(requestedId)).pipe(
+          map((deletedTask): DeleteTaskResponse => {
+            if (!deletedTask) {
+              return this.createDeleteErrorResponse(
+                requestedId,
+                DeleteTaskErrorCode.DELETE_TASK_ERROR_CODE_NOT_FOUND,
+                'Task not found',
+              );
+            }
+
+            return {
+              requestedId,
+              deletedTask: toProtoTask(deletedTask),
+            };
+          }),
+        );
+      }),
+      tap({
+        next: () => {
+          sentCount += 1;
+          this.logger.log(`[DeleteTasks] Sent response ${sentCount}`);
+        },
+        complete: () => {
+          this.logger.log(
+            `[DeleteTasks] Stream completed: received=${receivedCount}; sent=${sentCount}; durationMs=${Date.now() - startedAt}`,
+          );
+        },
+        error: () => {
+          this.logger.error(
+            `[DeleteTasks] Stream failed: received=${receivedCount}; sent=${sentCount}; durationMs=${Date.now() - startedAt}`,
+          );
+        },
+      }),
+    );
+  }
+
+  private async deleteTaskById(id: string): Promise<TaskEntity | undefined> {
+    const result = await this.taskRepository
+      .createQueryBuilder()
+      .delete()
+      .from(TaskEntity)
+      .where('id = :id', { id })
+      .returning('*')
+      .execute();
+
+    const deletedRow = (result.raw as DeletedTaskRow[])[0];
+
+    return deletedRow ? toTaskEntityFromDeletedRow(deletedRow) : undefined;
+  }
+
+  private createDeleteErrorResponse(
+    requestedId: string,
+    code: DeleteTaskErrorCode,
+    message: string,
+  ): DeleteTaskResponse {
+    return {
+      requestedId,
+      error: {
+        code,
+        message,
+      },
+    };
   }
 }

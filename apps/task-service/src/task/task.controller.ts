@@ -11,6 +11,8 @@ import {
   TaskServiceControllerMethods,
   UpdateTaskStatusesResponse,
   UpdateTaskStatusRequest,
+  DeleteTaskRequest,
+  DeleteTaskResponse,
 } from '@app/contracts';
 
 import { TaskService } from './task.service';
@@ -36,5 +38,12 @@ export class TaskController implements TaskServiceControllerContract {
     requests: Observable<UpdateTaskStatusRequest>,
   ): Observable<UpdateTaskStatusesResponse> {
     return this.taskService.updateTaskStatuses(requests);
+  }
+
+  @GrpcStreamMethod(TASK_SERVICE_NAME, 'DeleteTasks')
+  deleteTasks(
+    requests: Observable<DeleteTaskRequest>,
+  ): Observable<DeleteTaskResponse> {
+    return this.taskService.deleteTasks(requests);
   }
 }

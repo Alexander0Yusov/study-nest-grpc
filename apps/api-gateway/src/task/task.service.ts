@@ -9,15 +9,19 @@ import {
   TaskServiceClient,
   UpdateTaskStatusRequest,
   UpdateTaskStatusesResponse,
+  DeleteTaskRequest,
 } from '@app/contracts';
-
-import { CreateTaskRequestDto } from './dto/create-task-request.dto';
 
 import { Logger } from '@nestjs/common';
 import { lastValueFrom, tap, toArray, from, map, Observable } from 'rxjs';
 
+import { CreateTaskRequestDto } from './dto/create-task-request.dto';
 import { UpdateTaskStatusesRequestDto } from './dto/update-task-statuses-request.dto';
+import { DeleteTasksRequestDto } from './dto/delete-tasks-request.dto';
+import { DeleteTasksResponseDto } from './dto/delete-tasks-response.dto';
+
 import { toProtoTaskStatus } from './mappers/task-status.mapper';
+import { toDeleteTaskResultDto } from './mappers/delete-task-response.mapper';
 
 @Injectable()
 export class TaskService implements OnModuleInit {
@@ -117,6 +121,58 @@ export class TaskService implements OnModuleInit {
             );
           },
         }),
+      ),
+    );
+  }
+
+  deleteTasks(dto: DeleteTasksRequestDto): Promise<DeleteTasksResponseDto> {
+    const startedAt = Date.now();
+
+    let sentCount = 0;
+    let receivedCount = 0;
+
+    this.logger.log(
+      `[DeleteTasks] Bidirectional stream started: messages=${dto.ids.length}`,
+    );
+
+    const requests$ = from(dto.ids).pipe(
+      map((id): DeleteTaskRequest => ({
+        id,
+      })),
+      tap({
+        next: () => {
+          sentCount += 1;
+          this.logger.log(`[DeleteTasks] Sent message ${sentCount}`);
+        },
+        complete: () => {
+          this.logger.log(
+            `[DeleteTasks] Request stream completed: messages=${sentCount}`,
+          );
+        },
+      }),
+    );
+
+    return lastValueFrom(
+      this.taskServiceClient.deleteTasks(requests$).pipe(
+        map((response) => toDeleteTaskResultDto(response)),
+        tap({
+          next: () => {
+            receivedCount += 1;
+            this.logger.log(`[DeleteTasks] Received response ${receivedCount}`);
+          },
+          complete: () => {
+            this.logger.log(
+              `[DeleteTasks] Bidirectional stream completed: sent=${sentCount}; received=${receivedCount}; durationMs=${Date.now() - startedAt}`,
+            );
+          },
+          error: () => {
+            this.logger.error(
+              `[DeleteTasks] Bidirectional stream failed: sent=${sentCount}; received=${receivedCount}; durationMs=${Date.now() - startedAt}`,
+            );
+          },
+        }),
+        toArray(),
+        map((results): DeleteTasksResponseDto => ({ results })),
       ),
     );
   }

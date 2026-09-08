@@ -20,6 +20,14 @@ export enum TaskStatus {
   UNRECOGNIZED = -1,
 }
 
+export enum DeleteTaskErrorCode {
+  DELETE_TASK_ERROR_CODE_UNSPECIFIED = 0,
+  DELETE_TASK_ERROR_CODE_NOT_FOUND = 1,
+  DELETE_TASK_ERROR_CODE_INVALID_ARGUMENT = 2,
+  DELETE_TASK_ERROR_CODE_DUPLICATE = 3,
+  UNRECOGNIZED = -1,
+}
+
 export interface Task {
   id?: string | undefined;
   title?: string | undefined;
@@ -51,6 +59,21 @@ export interface UpdateTaskStatusesResponse {
   updatedCount?: number | undefined;
 }
 
+export interface DeleteTaskRequest {
+  id?: string | undefined;
+}
+
+export interface DeleteTaskError {
+  code?: DeleteTaskErrorCode | undefined;
+  message?: string | undefined;
+}
+
+export interface DeleteTaskResponse {
+  requestedId?: string | undefined;
+  deletedTask?: Task | undefined;
+  error?: DeleteTaskError | undefined;
+}
+
 export const STUDY_TASKS_V1_PACKAGE_NAME = "study.tasks.v1";
 
 export interface TaskServiceClient {
@@ -66,6 +89,10 @@ export interface TaskServiceClient {
     request: Observable<UpdateTaskStatusRequest>,
     metadata?: Metadata,
   ): Observable<UpdateTaskStatusesResponse>;
+
+  /** Deletes tasks and emits one result for every incoming identifier. */
+
+  deleteTasks(request: Observable<DeleteTaskRequest>, metadata?: Metadata): Observable<DeleteTaskResponse>;
 }
 
 export interface TaskServiceController {
@@ -84,6 +111,10 @@ export interface TaskServiceController {
     request: Observable<UpdateTaskStatusRequest>,
     metadata?: Metadata,
   ): Promise<UpdateTaskStatusesResponse> | Observable<UpdateTaskStatusesResponse> | UpdateTaskStatusesResponse;
+
+  /** Deletes tasks and emits one result for every incoming identifier. */
+
+  deleteTasks(request: Observable<DeleteTaskRequest>, metadata?: Metadata): Observable<DeleteTaskResponse>;
 }
 
 export function TaskServiceControllerMethods() {
@@ -93,7 +124,7 @@ export function TaskServiceControllerMethods() {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("TaskService", method)(constructor.prototype[method], method, descriptor);
     }
-    const grpcStreamMethods: string[] = ["updateTaskStatuses"];
+    const grpcStreamMethods: string[] = ["updateTaskStatuses", "deleteTasks"];
     for (const method of grpcStreamMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcStreamMethod("TaskService", method)(constructor.prototype[method], method, descriptor);

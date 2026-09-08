@@ -11,6 +11,13 @@ enum TaskStatus {
   TASK_STATUS_COMPLETED = 3;
 }
 
+enum DeleteTaskErrorCode {
+  DELETE_TASK_ERROR_CODE_UNSPECIFIED = 0;
+  DELETE_TASK_ERROR_CODE_NOT_FOUND = 1;
+  DELETE_TASK_ERROR_CODE_INVALID_ARGUMENT = 2;
+  DELETE_TASK_ERROR_CODE_DUPLICATE = 3;
+}
+
 message Task {
   string id = 1;
   string title = 2;
@@ -41,6 +48,24 @@ message UpdateTaskStatusesResponse {
   uint32 updated_count = 2;
 }
 
+message DeleteTaskRequest {
+  string id = 1;
+}
+
+message DeleteTaskError {
+  DeleteTaskErrorCode code = 1;
+  string message = 2;
+}
+
+message DeleteTaskResponse {
+  string requested_id = 1;
+
+  oneof result {
+    Task deleted_task = 2;
+    DeleteTaskError error = 3;
+  }
+}
+
 service TaskService {
   rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
 
@@ -50,4 +75,9 @@ service TaskService {
   // Updates multiple tasks using a client request stream.
   rpc UpdateTaskStatuses(stream UpdateTaskStatusRequest)
   returns (UpdateTaskStatusesResponse);
+
+  // Deletes tasks and emits one result for every incoming identifier.
+  rpc DeleteTasks(stream DeleteTaskRequest)
+  returns (stream DeleteTaskResponse);
 }
+
