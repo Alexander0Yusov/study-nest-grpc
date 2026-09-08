@@ -19,7 +19,9 @@ enum DeleteTaskErrorCode {
 }
 
 message Task {
-  string id = 1 [deprecated = true];
+  reserved 1;
+  reserved "id";
+
   string title = 2;
   optional string description = 3;
   TaskStatus status = 4;
@@ -40,7 +42,9 @@ message CreateTaskResponse {
 message StreamTasksRequest {}
 
 message UpdateTaskStatusRequest {
-  string id = 1 [deprecated = true];
+  reserved 1;
+  reserved "id";
+
   TaskStatus status = 2;
   int32 task_id = 3;
 }
@@ -51,7 +55,9 @@ message UpdateTaskStatusesResponse {
 }
 
 message DeleteTaskRequest {
-  string id = 1 [deprecated = true];
+  reserved 1;
+  reserved "id";
+
   int32 task_id = 2;
 }
 
@@ -61,7 +67,9 @@ message DeleteTaskError {
 }
 
 message DeleteTaskResponse {
-  string requested_id = 1 [deprecated = true];
+  reserved 1;
+  reserved "requested_id";
+
   int32 requested_task_id = 4;
 
   oneof result {

@@ -187,18 +187,19 @@ Stage 1 is reversible by code/contract revert. Stage 2 must have an explicit pre
 
 ## 13. Current checkpoint
 
-- Active stage: Stage 2 completed.
-- Last completed implementation stage: Stage 2 — database and application cutover.
+- Active stage: Stage 3 completed.
+- Last completed implementation stage: Stage 3 — contract cleanup.
 - Baseline commit: `eb632c3f2994dd9bdc4c13c2e93c4a7995d0d0f7`.
 - Database ID type: PostgreSQL integer.
 - TypeORM ID type: number.
-- Protobuf active ID: taskId int32.
-- Deprecated UUID fields: still present, unused.
+- Protobuf ID type: int32 only.
+- Retired UUID field numbers/names: reserved.
 - HTTP ID type: number.
 - Stage 1 verification: `pnpm run proto:generate`, `pnpm run build:api-gateway`, and `pnpm run build:task-service` completed successfully.
 - Stage 2 verification: integer `task` schema and sequence verified; build, HTTP, direct gRPC, and OpenAPI runtime regressions completed successfully.
-- Plan status: awaiting explicit approval of Stage 3.
-- Next allowed action: Stage 3 only after explicit approval.
+- Stage 3 verification: `pnpm run proto:generate`, `pnpm run build:task-service`, and `pnpm run build:api-gateway` completed successfully.
+- Plan status: awaiting explicit approval of Stage 4.
+- Next allowed action: Stage 4 only after explicit approval.
 
 ## 14. Decisions requiring approval
 
