@@ -1,30 +1,24 @@
-import { randomUUID } from 'node:crypto';
-
 import { status } from '@grpc/grpc-js';
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { RpcException } from '@nestjs/microservices';
 
-import {
-  CreateTaskRequest,
-  CreateTaskResponse,
-  Task,
-  TaskStatus,
-} from '@app/contracts';
+import { CreateTaskRequest, CreateTaskResponse } from '@app/contracts';
 
-function toTimestamp(date: Date): NonNullable<Task['createdAt']> {
-  const milliseconds = date.getTime();
+import { Repository } from 'typeorm';
 
-  return {
-    seconds: Math.floor(milliseconds / 1_000),
-    nanos: (milliseconds % 1_000) * 1_000_000,
-  };
-}
+import { TaskEntity } from './entities/task.entity';
+import { TaskStatus } from './enums/task-status.enum';
+import { toProtoTask } from './mappers/task.proto.mapper';
 
 @Injectable()
 export class TaskService {
-  private readonly tasks = new Map<string, Task>();
+  constructor(
+    @InjectRepository(TaskEntity)
+    private readonly taskRepository: Repository<TaskEntity>,
+  ) {}
 
-  createTask(request: CreateTaskRequest): CreateTaskResponse {
+  async createTask(request: CreateTaskRequest): Promise<CreateTaskResponse> {
     const title = request.title?.trim();
 
     if (!title) {
@@ -34,21 +28,16 @@ export class TaskService {
       });
     }
 
-    const id = randomUUID();
-    const timestamp = toTimestamp(new Date());
-    const description = request.description?.trim() || undefined;
-
-    const task: Task = {
-      id,
+    const entity = this.taskRepository.create({
       title,
-      description,
-      status: TaskStatus.TASK_STATUS_PENDING,
-      createdAt: timestamp,
-      updatedAt: timestamp,
+      description: request.description?.trim() || null,
+      status: TaskStatus.PENDING,
+    });
+
+    const savedTask = await this.taskRepository.save(entity);
+
+    return {
+      task: toProtoTask(savedTask),
     };
-
-    this.tasks.set(id, task);
-
-    return { task };
   }
 }

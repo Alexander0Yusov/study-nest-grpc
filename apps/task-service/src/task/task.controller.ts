@@ -17,7 +17,7 @@ export class TaskController implements TaskServiceControllerContract {
   constructor(private readonly taskService: TaskService) {}
 
   @GrpcMethod(TASK_SERVICE_NAME, 'CreateTask')
-  createTask(request: CreateTaskRequest): CreateTaskResponse {
+  createTask(request: CreateTaskRequest): Promise<CreateTaskResponse> {
     return this.taskService.createTask(request);
   }
 }
