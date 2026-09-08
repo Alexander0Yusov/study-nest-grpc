@@ -19,12 +19,13 @@ enum DeleteTaskErrorCode {
 }
 
 message Task {
-  string id = 1;
+  string id = 1 [deprecated = true];
   string title = 2;
   optional string description = 3;
   TaskStatus status = 4;
   google.protobuf.Timestamp created_at = 5;
   google.protobuf.Timestamp updated_at = 6;
+  int32 task_id = 7;
 }
 
 message CreateTaskRequest {
@@ -39,8 +40,9 @@ message CreateTaskResponse {
 message StreamTasksRequest {}
 
 message UpdateTaskStatusRequest {
-  string id = 1;
+  string id = 1 [deprecated = true];
   TaskStatus status = 2;
+  int32 task_id = 3;
 }
 
 message UpdateTaskStatusesResponse {
@@ -49,7 +51,8 @@ message UpdateTaskStatusesResponse {
 }
 
 message DeleteTaskRequest {
-  string id = 1;
+  string id = 1 [deprecated = true];
+  int32 task_id = 2;
 }
 
 message DeleteTaskError {
@@ -58,7 +61,8 @@ message DeleteTaskError {
 }
 
 message DeleteTaskResponse {
-  string requested_id = 1;
+  string requested_id = 1 [deprecated = true];
+  int32 requested_task_id = 4;
 
   oneof result {
     Task deleted_task = 2;

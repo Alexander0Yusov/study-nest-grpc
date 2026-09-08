@@ -29,12 +29,14 @@ export enum DeleteTaskErrorCode {
 }
 
 export interface Task {
+  /** @deprecated */
   id?: string | undefined;
   title?: string | undefined;
   description?: string | undefined;
   status?: TaskStatus | undefined;
   createdAt?: Timestamp | undefined;
   updatedAt?: Timestamp | undefined;
+  taskId?: number | undefined;
 }
 
 export interface CreateTaskRequest {
@@ -50,8 +52,10 @@ export interface StreamTasksRequest {
 }
 
 export interface UpdateTaskStatusRequest {
+  /** @deprecated */
   id?: string | undefined;
   status?: TaskStatus | undefined;
+  taskId?: number | undefined;
 }
 
 export interface UpdateTaskStatusesResponse {
@@ -60,7 +64,9 @@ export interface UpdateTaskStatusesResponse {
 }
 
 export interface DeleteTaskRequest {
+  /** @deprecated */
   id?: string | undefined;
+  taskId?: number | undefined;
 }
 
 export interface DeleteTaskError {
@@ -69,7 +75,9 @@ export interface DeleteTaskError {
 }
 
 export interface DeleteTaskResponse {
+  /** @deprecated */
   requestedId?: string | undefined;
+  requestedTaskId?: number | undefined;
   deletedTask?: Task | undefined;
   error?: DeleteTaskError | undefined;
 }
