@@ -6,6 +6,7 @@ import {
 } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception/http-exception.filter';
+import { setupSwagger } from './common/swagger/setup-swagger';
 
 import { ConfigType } from '@nestjs/config';
 import { appConfig } from './config/app.config';
@@ -31,6 +32,8 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   const config = app.get<ConfigType<typeof appConfig>>(appConfig.KEY);
+
+  setupSwagger(app);
 
   await app.listen(config.port, config.host);
 }

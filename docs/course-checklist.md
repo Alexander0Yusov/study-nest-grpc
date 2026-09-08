@@ -185,3 +185,34 @@ unary-вызов через firstValueFrom();
 пустой поток → HTTP 200 {"items":[]};
 protobuf Timestamp → ISO;
 сбор server stream в HTTP-массив.
+
+client streaming: HTTP-массив ID → RxJS from() → поток gRPC-сообщений;
+автоматическое завершение клиентского потока после отправки всех ID;
+серверный client-stream handler возвращает Observable, а не ожидающий поток Promise;
+накопление конечного client stream через toArray();
+массовое изменение статуса одним SQL UPDATE ... WHERE id IN (...);
+отсутствующие ID как допустимый частичный результат requestedCount / updatedCount;
+валидация batch: пустой массив, UUID, дубликаты, допустимый статус, лимит 500;
+явный mapper HTTP string enum → protobuf numeric enum;
+bidirectional streaming: поток запросов → поток ответов;
+последовательная обработка bidi-сообщений через concatMap();
+удаление одной задачи одним DELETE ... RETURNING без предварительного SELECT;
+явный mapper raw PostgreSQL row → TaskEntity → protobuf Task;
+protobuf oneof для результата удаления: deletedTask либо error;
+ожидаемая ошибка NOT_FOUND передаётся элементом потока и не завершает весь RPC;
+неизвестная ошибка БД завершает поток и безопасно преобразуется в HTTP 500;
+Gateway собирает bidi response stream через toArray() и возвращает HTTP-массив;
+сохранение порядка bidi-ответов относительно входящих ID;
+неатомарность bidi-batch: выполненные удаления не откатываются при отмене потока;
+совместимость Nest proto-loader с плоским runtime-представлением oneof;
+ручная runtime-проверка обеих веток oneof: deletedTask и NOT_FOUND;
+логирование количества отправленных и принятых stream-сообщений и длительности;
+реализованы все четыре формата gRPC: unary, server streaming, client streaming, bidirectional streaming.
+
+локальный PostgreSQL в Docker Compose;
+TypeORM Repository внутри Task Service;
+TaskEntity отделена от protobuf Task;
+явный mapper persistence-модели в transport-модель;
+synchronize: true используется только для учебной локальной среды;
+CreateTask сохраняет задачу в PostgreSQL вместо in-memory Map;
+UpdateDateColumn обновляется при массовом изменении статуса.
