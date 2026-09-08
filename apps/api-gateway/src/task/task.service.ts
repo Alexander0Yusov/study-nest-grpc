@@ -13,7 +13,7 @@ import {
 } from '@app/contracts';
 
 import { Logger } from '@nestjs/common';
-import { lastValueFrom, tap, toArray, from, map, Observable } from 'rxjs';
+import { lastValueFrom, tap, toArray, from, map } from 'rxjs';
 
 import { CreateTaskRequestDto } from './dto/create-task-request.dto';
 import { UpdateTaskStatusesRequestDto } from './dto/update-task-statuses-request.dto';
@@ -91,7 +91,7 @@ export class TaskService implements OnModuleInit {
 
     const requests$ = from(dto.ids).pipe(
       map((id): UpdateTaskStatusRequest => ({
-        id,
+        taskId: id,
         status: protoStatus,
       })),
       tap({
@@ -137,7 +137,7 @@ export class TaskService implements OnModuleInit {
 
     const requests$ = from(dto.ids).pipe(
       map((id): DeleteTaskRequest => ({
-        id,
+        taskId: id,
       })),
       tap({
         next: () => {

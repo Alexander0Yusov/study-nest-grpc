@@ -2,6 +2,21 @@ import type { Task, Timestamp } from '@app/contracts';
 
 import { TaskResponseDto } from '../dto/task-response.dto';
 
+const MAX_TASK_ID = 2_147_483_647;
+
+export function toHttpTaskId(taskId: number | undefined): number {
+  if (
+    typeof taskId !== 'number' ||
+    !Number.isInteger(taskId) ||
+    taskId < 1 ||
+    taskId > MAX_TASK_ID
+  ) {
+    throw new Error('Task has an invalid taskId');
+  }
+
+  return taskId;
+}
+
 function timestampToIso(timestamp?: Timestamp): string | undefined {
   if (timestamp?.seconds === undefined) {
     return undefined;
@@ -15,7 +30,7 @@ function timestampToIso(timestamp?: Timestamp): string | undefined {
 
 export function toTaskResponseDto(task: Task): TaskResponseDto {
   return {
-    id: task.id,
+    id: toHttpTaskId(task.taskId),
     title: task.title,
     description: task.description,
     status: task.status,

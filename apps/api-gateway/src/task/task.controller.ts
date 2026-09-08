@@ -15,6 +15,7 @@ import { TaskService } from './task.service';
 import { UpdateTaskStatusesResponse } from '../../../../libs/contracts/src';
 
 import { toTaskResponseDto } from './mappers/task-http.mapper';
+import { toCreateTaskResponseDto } from './mappers/create-task-response.mapper';
 
 import { CreateTaskRequestDto } from './dto/create-task-request.dto';
 import { GetTasksResponseDto } from './dto/task-response.dto';
@@ -47,8 +48,10 @@ export class TaskController {
   @ApiBadRequestResponse({ type: GatewayErrorResponseDto })
   @ApiServiceUnavailableResponse({ type: GatewayErrorResponseDto })
   @ApiInternalServerErrorResponse({ type: GatewayErrorResponseDto })
-  create(@Body() dto: CreateTaskRequestDto) {
-    return this.taskService.create(dto);
+  async create(
+    @Body() dto: CreateTaskRequestDto,
+  ): Promise<CreateTaskResponseDto> {
+    return toCreateTaskResponseDto(await this.taskService.create(dto));
   }
 
   @Get()

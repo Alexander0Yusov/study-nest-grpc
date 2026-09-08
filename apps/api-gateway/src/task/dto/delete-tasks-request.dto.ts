@@ -3,27 +3,30 @@ import {
   ArrayNotEmpty,
   ArrayUnique,
   IsArray,
-  IsUUID,
+  IsInt,
+  Max,
+  Min,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class DeleteTasksRequestDto {
   @ApiProperty({
-    type: String,
+    type: 'integer',
     isArray: true,
     minItems: 1,
     maxItems: 500,
     uniqueItems: true,
-    format: 'uuid',
-    example: [
-      '2b2148e5-97d8-489d-b611-a2d211c95f60',
-      '00000000-0000-4000-8000-000000000001',
-    ],
+    format: 'int32',
+    minimum: 1,
+    maximum: 2_147_483_647,
+    example: [1, 2],
   })
   @IsArray()
   @ArrayNotEmpty()
   @ArrayMaxSize(500)
   @ArrayUnique()
-  @IsUUID('4', { each: true })
-  ids!: string[];
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  @Max(2_147_483_647, { each: true })
+  ids!: number[];
 }

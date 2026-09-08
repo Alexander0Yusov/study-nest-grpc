@@ -2,7 +2,7 @@ import { TaskEntity } from '../entities/task.entity';
 import { TaskStatus as PersistenceTaskStatus } from '../enums/task-status.enum';
 
 export interface DeletedTaskRow {
-  id: string;
+  id: number;
   title: string;
   description: string | null;
   status: PersistenceTaskStatus;

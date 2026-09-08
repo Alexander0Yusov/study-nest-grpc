@@ -21,10 +21,13 @@ export class DeleteTaskErrorDto {
 
 export class DeletedTaskResultDto {
   @ApiProperty({
-    format: 'uuid',
-    example: '2b2148e5-97d8-489d-b611-a2d211c95f60',
+    type: 'integer',
+    format: 'int32',
+    minimum: 1,
+    maximum: 2_147_483_647,
+    example: 1,
   })
-  requestedId!: string;
+  requestedId!: number;
 
   @ApiProperty({ type: TaskResponseDto })
   deletedTask!: TaskResponseDto;
@@ -32,10 +35,13 @@ export class DeletedTaskResultDto {
 
 export class DeleteTaskErrorResultDto {
   @ApiProperty({
-    format: 'uuid',
-    example: '00000000-0000-4000-8000-000000000001',
+    type: 'integer',
+    format: 'int32',
+    minimum: 1,
+    maximum: 2_147_483_647,
+    example: 2,
   })
-  requestedId!: string;
+  requestedId!: number;
 
   @ApiProperty({ type: DeleteTaskErrorDto })
   error!: DeleteTaskErrorDto;

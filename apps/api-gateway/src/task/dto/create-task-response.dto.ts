@@ -15,10 +15,13 @@ export class ProtobufTimestampResponseDto {
 
 export class CreatedTaskResponseDto {
   @ApiProperty({
-    format: 'uuid',
-    example: '2b2148e5-97d8-489d-b611-a2d211c95f60',
+    type: 'integer',
+    format: 'int32',
+    minimum: 1,
+    maximum: 2_147_483_647,
+    example: 1,
   })
-  id?: string;
+  id?: number;
 
   @ApiProperty({ example: 'Learn gRPC streaming' })
   title?: string;

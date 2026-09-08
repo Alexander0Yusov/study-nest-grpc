@@ -10,8 +10,8 @@ import { TaskStatus } from '../enums/task-status.enum';
 
 @Entity({ name: 'task' })
 export class TaskEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  @PrimaryGeneratedColumn()
+  id!: number;
 
   @Column({
     type: 'varchar',

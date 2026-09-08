@@ -9,6 +9,16 @@ const taskStatusMap: Record<PersistenceTaskStatus, ProtoTaskStatus> = {
   [PersistenceTaskStatus.COMPLETED]: ProtoTaskStatus.TASK_STATUS_COMPLETED,
 };
 
+const MAX_TASK_ID = 2_147_483_647;
+
+function toProtoTaskId(id: number): number {
+  if (!Number.isInteger(id) || id < 1 || id > MAX_TASK_ID) {
+    throw new Error('Task entity has an invalid id');
+  }
+
+  return id;
+}
+
 const toTimestamp = (date: Date): NonNullable<Task['createdAt']> => {
   const milliseconds = date.getTime();
 
@@ -19,7 +29,7 @@ const toTimestamp = (date: Date): NonNullable<Task['createdAt']> => {
 };
 
 export const toProtoTask = (entity: TaskEntity): Task => ({
-  id: entity.id,
+  taskId: toProtoTaskId(entity.id),
   title: entity.title,
   description: entity.description ?? undefined,
   status: taskStatusMap[entity.status],

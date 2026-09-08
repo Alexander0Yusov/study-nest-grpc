@@ -3,8 +3,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RpcException } from '@nestjs/microservices';
 
-import { isUUID } from 'class-validator';
-
 import {
   CreateTaskRequest,
   CreateTaskResponse,
@@ -26,6 +24,7 @@ import {
   DeletedTaskRow,
   toTaskEntityFromDeletedRow,
 } from './mappers/deleted-task-row.mapper';
+import { requireTaskId } from './task-id.validator';
 
 import {
   defer,
@@ -147,19 +146,12 @@ export class TaskService {
       });
     }
 
-    const ids: string[] = [];
-    const uniqueIds = new Set<string>();
+    const ids: number[] = [];
+    const uniqueIds = new Set<number>();
     let requestedStatus: ProtoTaskStatus | undefined;
 
     for (const request of requests) {
-      const id = request.id?.trim();
-
-      if (!id || !isUUID(id, '4')) {
-        throw new RpcException({
-          code: status.INVALID_ARGUMENT,
-          message: 'Every task id must be a valid UUID v4',
-        });
-      }
+      const id = requireTaskId(request.taskId);
 
       if (uniqueIds.has(id)) {
         throw new RpcException({
@@ -245,7 +237,7 @@ export class TaskService {
     requests$: Observable<DeleteTaskRequest>,
   ): Observable<DeleteTaskResponse> {
     const startedAt = Date.now();
-    const processedIds = new Set<string>();
+    const processedIds = new Set<number>();
 
     let receivedCount = 0;
     let sentCount = 0;
@@ -265,42 +257,45 @@ export class TaskService {
           });
         }
 
-        const requestedId = request.id?.trim() ?? '';
+        const requestedTaskId = request.taskId ?? 0;
+        let taskId: number;
 
-        if (!isUUID(requestedId, '4')) {
+        try {
+          taskId = requireTaskId(request.taskId);
+        } catch {
           return of(
             this.createDeleteErrorResponse(
-              requestedId,
+              requestedTaskId,
               DeleteTaskErrorCode.DELETE_TASK_ERROR_CODE_INVALID_ARGUMENT,
-              'Task id must be a valid UUID v4',
+              'Task id must be a positive int32',
             ),
           );
         }
 
-        if (processedIds.has(requestedId)) {
+        if (processedIds.has(taskId)) {
           return of(
             this.createDeleteErrorResponse(
-              requestedId,
+              taskId,
               DeleteTaskErrorCode.DELETE_TASK_ERROR_CODE_DUPLICATE,
               'Task id is duplicated in the stream',
             ),
           );
         }
 
-        processedIds.add(requestedId);
+        processedIds.add(taskId);
 
-        return defer(() => this.deleteTaskById(requestedId)).pipe(
+        return defer(() => this.deleteTaskById(taskId)).pipe(
           map((deletedTask): DeleteTaskResponse => {
             if (!deletedTask) {
               return this.createDeleteErrorResponse(
-                requestedId,
+                taskId,
                 DeleteTaskErrorCode.DELETE_TASK_ERROR_CODE_NOT_FOUND,
                 'Task not found',
               );
             }
 
             return {
-              requestedId,
+              requestedTaskId: taskId,
               deletedTask: toProtoTask(deletedTask),
             };
           }),
@@ -325,7 +320,7 @@ export class TaskService {
     );
   }
 
-  private async deleteTaskById(id: string): Promise<TaskEntity | undefined> {
+  private async deleteTaskById(id: number): Promise<TaskEntity | undefined> {
     const result = await this.taskRepository
       .createQueryBuilder()
       .delete()
@@ -340,12 +335,12 @@ export class TaskService {
   }
 
   private createDeleteErrorResponse(
-    requestedId: string,
+    requestedTaskId: number,
     code: DeleteTaskErrorCode,
     message: string,
   ): DeleteTaskResponse {
     return {
-      requestedId,
+      requestedTaskId,
       error: {
         code,
         message,

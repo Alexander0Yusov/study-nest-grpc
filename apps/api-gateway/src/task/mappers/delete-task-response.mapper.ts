@@ -4,7 +4,7 @@ import {
   DeleteTaskErrorResponseCode,
   DeleteTaskResultDto,
 } from '../dto/delete-tasks-response.dto';
-import { toTaskResponseDto } from './task-http.mapper';
+import { toHttpTaskId, toTaskResponseDto } from './task-http.mapper';
 
 function toHttpErrorCode(
   code: DeleteTaskErrorCode | undefined,
@@ -27,13 +27,9 @@ function toHttpErrorCode(
 export function toDeleteTaskResultDto(
   response: DeleteTaskResponse,
 ): DeleteTaskResultDto {
-  const requestedId = response.requestedId;
+  const requestedId = toHttpTaskId(response.requestedTaskId);
   const deletedTask = response.deletedTask;
   const error = response.error;
-
-  if (!requestedId) {
-    throw new Error('DeleteTaskResponse has no requestedId');
-  }
 
   if (deletedTask && !error) {
     return {
