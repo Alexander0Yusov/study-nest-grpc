@@ -1,6 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-const TASK_STATUS_VALUES = [1, 2, 3] as const;
+export enum HttpTaskStatus {
+  PENDING = 'TASK_STATUS_PENDING',
+  IN_PROGRESS = 'TASK_STATUS_IN_PROGRESS',
+  COMPLETED = 'TASK_STATUS_COMPLETED',
+}
 
 export class TaskResponseDto {
   @ApiProperty({
@@ -10,10 +14,10 @@ export class TaskResponseDto {
     maximum: 2_147_483_647,
     example: 1,
   })
-  id?: number;
+  id!: number;
 
   @ApiProperty({ example: 'Learn gRPC streaming' })
-  title?: string;
+  title!: string;
 
   @ApiPropertyOptional({
     example: 'Verify all four gRPC interaction types',
@@ -22,25 +26,23 @@ export class TaskResponseDto {
   description?: string;
 
   @ApiProperty({
-    type: 'number',
-    enum: TASK_STATUS_VALUES,
-    example: 3,
-    description:
-      'Numeric protobuf TaskStatus value: 1 = PENDING, 2 = IN_PROGRESS, 3 = COMPLETED.',
+    enum: HttpTaskStatus,
+    example: HttpTaskStatus.PENDING,
+    description: 'Task status value.',
   })
-  status?: number;
+  status!: HttpTaskStatus;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     format: 'date-time',
     example: '2026-09-08T12:00:00.000Z',
   })
-  createdAt?: string;
+  createdAt!: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     format: 'date-time',
     example: '2026-09-08T12:00:00.000Z',
   })
-  updatedAt?: string;
+  updatedAt!: string;
 }
 
 export class GetTasksResponseDto {

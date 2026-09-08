@@ -15,7 +15,6 @@ import { TaskService } from './task.service';
 import { UpdateTaskStatusesResponse } from '../../../../libs/contracts/src';
 
 import { toTaskResponseDto } from './mappers/task-http.mapper';
-import { toCreateTaskResponseDto } from './mappers/create-task-response.mapper';
 
 import { CreateTaskRequestDto } from './dto/create-task-request.dto';
 import { GetTasksResponseDto } from './dto/task-response.dto';
@@ -41,17 +40,15 @@ export class TaskController {
     operationId: 'createTask',
     summary: 'Create a task',
     description:
-      'Gateway performs one unary CreateTask gRPC request. The current response preserves protobuf Timestamp objects (seconds and nanos) inside task.createdAt and task.updatedAt.',
+      'Gateway performs one unary CreateTask gRPC request. The Gateway normalizes the protobuf task into the HTTP Task model.',
   })
   @ApiBody({ type: CreateTaskRequestDto })
   @ApiCreatedResponse({ type: CreateTaskResponseDto })
   @ApiBadRequestResponse({ type: GatewayErrorResponseDto })
   @ApiServiceUnavailableResponse({ type: GatewayErrorResponseDto })
   @ApiInternalServerErrorResponse({ type: GatewayErrorResponseDto })
-  async create(
-    @Body() dto: CreateTaskRequestDto,
-  ): Promise<CreateTaskResponseDto> {
-    return toCreateTaskResponseDto(await this.taskService.create(dto));
+  create(@Body() dto: CreateTaskRequestDto): Promise<CreateTaskResponseDto> {
+    return this.taskService.create(dto);
   }
 
   @Get()

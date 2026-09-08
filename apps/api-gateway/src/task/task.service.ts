@@ -4,7 +4,6 @@ import { firstValueFrom } from 'rxjs';
 
 import {
   Task,
-  CreateTaskResponse,
   TASK_SERVICE_NAME,
   TaskServiceClient,
   UpdateTaskStatusRequest,
@@ -19,9 +18,11 @@ import { CreateTaskRequestDto } from './dto/create-task-request.dto';
 import { UpdateTaskStatusesRequestDto } from './dto/update-task-statuses-request.dto';
 import { DeleteTasksRequestDto } from './dto/delete-tasks-request.dto';
 import { DeleteTasksResponseDto } from './dto/delete-tasks-response.dto';
+import { CreateTaskResponseDto } from './dto/create-task-response.dto';
 
 import { toProtoTaskStatus } from './mappers/task-status.mapper';
 import { toDeleteTaskResultDto } from './mappers/delete-task-response.mapper';
+import { toTaskResponseDto } from './mappers/task-http.mapper';
 
 @Injectable()
 export class TaskService implements OnModuleInit {
@@ -38,13 +39,19 @@ export class TaskService implements OnModuleInit {
       this.grpcTaskClient.getService<TaskServiceClient>(TASK_SERVICE_NAME);
   }
 
-  create(dto: CreateTaskRequestDto): Promise<CreateTaskResponse> {
-    return firstValueFrom(
+  async create(dto: CreateTaskRequestDto): Promise<CreateTaskResponseDto> {
+    const response = await firstValueFrom(
       this.taskServiceClient.createTask({
         title: dto.title,
         description: dto.description,
       }),
     );
+
+    if (!response.task) {
+      throw new Error('CreateTaskResponse has no task');
+    }
+
+    return { task: toTaskResponseDto(response.task) };
   }
 
   getTasks(): Promise<Task[]> {
