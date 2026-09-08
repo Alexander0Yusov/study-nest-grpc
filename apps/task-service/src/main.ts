@@ -25,6 +25,9 @@ async function bootstrap(): Promise<void> {
         url: grpcUrl,
         package: STUDY_TASKS_V1_PACKAGE_NAME,
         protoPath,
+        loader: {
+          longs: Number,
+        },
       },
     },
   );

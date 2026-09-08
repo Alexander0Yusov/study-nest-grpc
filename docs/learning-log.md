@@ -52,3 +52,9 @@ unary-вызов через firstValueFrom();
 глобальный gRPC→HTTP mapping в Gateway;
 глобальный RpcExceptionFilter в Task Service;
 сокрытие внутренних ошибок.
+
+одна задача;
+несколько gRPC-сообщений;
+пустой поток → HTTP 200 {"items":[]};
+protobuf Timestamp → ISO;
+сбор server stream в HTTP-массив.

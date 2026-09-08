@@ -35,6 +35,9 @@ export const grpcTaskOptions: ClientsProviderAsyncOptions = {
       ),
       package: STUDY_TASKS_V1_PACKAGE_NAME,
       protoPath: join(__dirname, 'proto', 'task', 'v1', 'task.proto'),
+      loader: {
+        longs: Number,
+      },
     },
   }),
 };
