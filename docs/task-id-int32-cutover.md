@@ -187,8 +187,8 @@ Stage 1 is reversible by code/contract revert. Stage 2 must have an explicit pre
 
 ## 13. Current checkpoint
 
-- Active stage: Stage 3 completed.
-- Last completed implementation stage: Stage 3 — contract cleanup.
+- Active stage: Stage 4 completed.
+- Last completed implementation stage: Stage 4 — final regression.
 - Baseline commit: `eb632c3f2994dd9bdc4c13c2e93c4a7995d0d0f7`.
 - Database ID type: PostgreSQL integer.
 - TypeORM ID type: number.
@@ -198,8 +198,10 @@ Stage 1 is reversible by code/contract revert. Stage 2 must have an explicit pre
 - Stage 1 verification: `pnpm run proto:generate`, `pnpm run build:api-gateway`, and `pnpm run build:task-service` completed successfully.
 - Stage 2 verification: integer `task` schema and sequence verified; build, HTTP, direct gRPC, and OpenAPI runtime regressions completed successfully.
 - Stage 3 verification: `pnpm run proto:generate`, `pnpm run build:task-service`, and `pnpm run build:api-gateway` completed successfully.
-- Plan status: awaiting explicit approval of Stage 4.
-- Next allowed action: Stage 4 only after explicit approval.
+- Stage 4 verification: four gRPC patterns smoke verified; `/docs` and `/docs-json` returned HTTP 200; visual Swagger verification delegated to user.
+- Cutover status: completed.
+- Plan status: awaiting user manual acceptance and commit.
+- Next allowed action: user manual acceptance and commit.
 
 ## 14. Decisions requiring approval
 
