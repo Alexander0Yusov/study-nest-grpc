@@ -5,7 +5,6 @@ import {
   Post,
   Patch,
   Delete,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -41,11 +40,7 @@ import { GatewayErrorResponseDto } from '../common/swagger/error-response.dto';
 import { BEARER_ACCESS_STRATEGY_NAME } from '../auth/guards/bearer-access/bearer-access.constants';
 import { BearerAccessGuard } from '../auth/guards/bearer-access/bearer-access.guard';
 import { AuthenticatedPrincipal } from '../auth/types/authenticated-principal';
-import { FastifyRequest } from 'fastify';
-
-type AuthenticatedFastifyRequest = FastifyRequest & {
-  user: AuthenticatedPrincipal;
-};
+import { AuthUser } from '../utils/decorators/auth-user.decorator';
 
 @ApiTags('Tasks')
 @ApiExtraModels(DeletedTaskResultDto, DeleteTaskErrorResultDto)
@@ -69,9 +64,9 @@ export class TaskController {
   @ApiInternalServerErrorResponse({ type: GatewayErrorResponseDto })
   create(
     @Body() dto: CreateTaskRequestDto,
-    @Req() request: AuthenticatedFastifyRequest,
+    @AuthUser() principal: AuthenticatedPrincipal,
   ): Promise<CreateTaskResponseDto> {
-    return this.taskService.create(dto, request.user.userId);
+    return this.taskService.create(dto, principal.userId);
   }
 
   @Get()
@@ -85,9 +80,9 @@ export class TaskController {
   @ApiServiceUnavailableResponse({ type: GatewayErrorResponseDto })
   @ApiInternalServerErrorResponse({ type: GatewayErrorResponseDto })
   async getTasks(
-    @Req() request: AuthenticatedFastifyRequest,
+    @AuthUser() principal: AuthenticatedPrincipal,
   ): Promise<GetTasksResponseDto> {
-    const items = await this.taskService.getTasks(request.user.userId);
+    const items = await this.taskService.getTasks(principal.userId);
 
     return { items: items.map(toTaskResponseDto) };
   }
@@ -106,9 +101,9 @@ export class TaskController {
   @ApiInternalServerErrorResponse({ type: GatewayErrorResponseDto })
   updateTaskStatuses(
     @Body() dto: UpdateTaskStatusesRequestDto,
-    @Req() request: AuthenticatedFastifyRequest,
+    @AuthUser() principal: AuthenticatedPrincipal,
   ): Promise<UpdateTaskStatusesResponse> {
-    return this.taskService.updateTaskStatuses(dto, request.user.userId);
+    return this.taskService.updateTaskStatuses(dto, principal.userId);
   }
 
   @Delete('batch')
@@ -125,8 +120,8 @@ export class TaskController {
   @ApiInternalServerErrorResponse({ type: GatewayErrorResponseDto })
   deleteTasks(
     @Body() dto: DeleteTasksRequestDto,
-    @Req() request: AuthenticatedFastifyRequest,
+    @AuthUser() principal: AuthenticatedPrincipal,
   ): Promise<DeleteTasksResponseDto> {
-    return this.taskService.deleteTasks(dto, request.user.userId);
+    return this.taskService.deleteTasks(dto, principal.userId);
   }
 }

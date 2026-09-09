@@ -29,6 +29,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 
 import { GatewayErrorResponseDto } from '../common/swagger/error-response.dto';
 import { authConfig } from '../config/auth.config';
+import { AuthUser } from '../utils/decorators/auth-user.decorator';
 import { AuthService } from './auth.service';
 import { LoginRequestDto } from './dto/login-request.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
@@ -39,10 +40,6 @@ import { BearerAccessGuard } from './guards/bearer-access/bearer-access.guard';
 import { BearerRefreshGuard } from './guards/bearer-refresh/bearer-refresh.guard';
 import { AuthenticatedPrincipal } from './types/authenticated-principal';
 import { RefreshAuthenticatedPrincipal } from './types/refresh-authenticated-principal';
-
-type AuthenticatedFastifyRequest = FastifyRequest & {
-  user: AuthenticatedPrincipal;
-};
 
 type RefreshAuthenticatedFastifyRequest = FastifyRequest & {
   user: RefreshAuthenticatedPrincipal;
@@ -132,10 +129,10 @@ export class AuthController {
   @ApiNoContentResponse({ description: 'The current Session was revoked.' })
   @ApiUnauthorizedResponse({ type: GatewayErrorResponseDto })
   public async logout(
-    @Req() request: AuthenticatedFastifyRequest,
+    @AuthUser() user: AuthenticatedPrincipal,
     @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<void> {
-    await this.authService.logout(request.user);
+    await this.authService.logout(user);
     this.clearRefreshCookie(reply);
   }
 
@@ -149,9 +146,9 @@ export class AuthController {
   @ApiOkResponse({ type: RegisterResponseDto })
   @ApiUnauthorizedResponse({ type: GatewayErrorResponseDto })
   public getCurrentUser(
-    @Req() request: AuthenticatedFastifyRequest,
+    @AuthUser() user: AuthenticatedPrincipal,
   ): Promise<RegisterResponseDto> {
-    return this.authService.getCurrentUser(request.user);
+    return this.authService.getCurrentUser(user);
   }
 
   private setRefreshCookie(
