@@ -8,6 +8,8 @@ import {
   CreateTaskResponse,
   GetTaskRequest,
   GetTaskResponse,
+  GetTasksPageRequest,
+  GetTasksPageResponse,
   Task,
   TaskStatus as ProtoTaskStatus,
   UpdateTaskStatusRequest,
@@ -27,6 +29,7 @@ import {
   toTaskEntityFromDeletedRow,
 } from './mappers/deleted-task-row.mapper';
 import { requireTaskId } from './task-id.validator';
+import { requirePageNumber, requirePageSize } from './pagination.validator';
 
 import {
   defer,
@@ -96,6 +99,28 @@ export class TaskService {
     }
 
     return { task: toProtoTask(task) };
+  }
+
+  async getTasksPage(
+    request: GetTasksPageRequest,
+    ownerId: number,
+  ): Promise<GetTasksPageResponse> {
+    const pageNumber = requirePageNumber(request.pageNumber);
+    const pageSize = requirePageSize(request.pageSize);
+    const [tasks, totalCount] = await this.taskRepository.findAndCount({
+      where: { ownerId },
+      order: { id: 'ASC' },
+      skip: (pageNumber - 1) * pageSize,
+      take: pageSize,
+    });
+
+    return {
+      items: tasks.map(toProtoTask),
+      pageNumber,
+      pageSize,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+    };
   }
 
   streamTasks(ownerId: number): Observable<Task> {

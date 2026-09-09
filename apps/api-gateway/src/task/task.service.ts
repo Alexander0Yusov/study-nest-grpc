@@ -8,6 +8,7 @@ import {
   TASK_SERVICE_NAME,
   TaskServiceClient,
   GetTaskResponse,
+  GetTasksPageResponse as GetTasksPageGrpcResponse,
   UpdateTaskStatusRequest,
   UpdateTaskStatusesResponse,
   DeleteTaskRequest,
@@ -22,6 +23,7 @@ import { UpdateTaskStatusesRequestDto } from './dto/update-task-statuses-request
 import { DeleteTasksRequestDto } from './dto/delete-tasks-request.dto';
 import { DeleteTasksResponseDto } from './dto/delete-tasks-response.dto';
 import { CreateTaskResponseDto } from './dto/create-task-response.dto';
+import { GetTasksPageResponseDto } from './dto/get-tasks-page-response.dto';
 
 import { toProtoTaskStatus } from './mappers/task-status.mapper';
 import { toDeleteTaskResultDto } from './mappers/delete-task-response.mapper';
@@ -81,6 +83,21 @@ export class TaskService implements OnModuleInit {
     }
 
     return { task: toTaskResponseDto(response.task) };
+  }
+
+  async getTasksPage(
+    pageNumber: number,
+    pageSize: number,
+    userId: number,
+  ): Promise<GetTasksPageResponseDto> {
+    const response: GetTasksPageGrpcResponse = await firstValueFrom(
+      this.taskServiceClient.getTasksPage(
+        { pageNumber, pageSize },
+        this.createUserMetadata(userId),
+      ),
+    );
+
+    return this.toGetTasksPageResponseDto(response, pageNumber, pageSize);
   }
 
   getTasks(userId: number): Promise<Task[]> {
@@ -235,5 +252,77 @@ export class TaskService implements OnModuleInit {
     metadata.set(GRPC_USER_ID_METADATA_KEY, userId.toString());
 
     return metadata;
+  }
+
+  private toGetTasksPageResponseDto(
+    response: GetTasksPageGrpcResponse,
+    requestedPageNumber: number,
+    requestedPageSize: number,
+  ): GetTasksPageResponseDto {
+    if (!Array.isArray(response.items)) {
+      throw new Error('GetTasksPageResponse has invalid items');
+    }
+
+    const pageNumber = this.requirePositiveInt32(
+      response.pageNumber,
+      'pageNumber',
+    );
+    const pageSize = this.requirePositiveInt32(response.pageSize, 'pageSize');
+    const totalCount = this.requireNonNegativeInt32(
+      response.totalCount,
+      'totalCount',
+    );
+    const totalPages = this.requireNonNegativeInt32(
+      response.totalPages,
+      'totalPages',
+    );
+
+    if (
+      pageNumber !== requestedPageNumber ||
+      pageSize !== requestedPageSize ||
+      totalPages !== Math.ceil(totalCount / pageSize)
+    ) {
+      throw new Error('GetTasksPageResponse has invalid pagination metadata');
+    }
+
+    return {
+      items: response.items.map(toTaskResponseDto),
+      pageNumber,
+      pageSize,
+      totalCount,
+      totalPages,
+    };
+  }
+
+  private requirePositiveInt32(
+    value: number | undefined,
+    field: string,
+  ): number {
+    if (
+      typeof value !== 'number' ||
+      !Number.isInteger(value) ||
+      value < 1 ||
+      value > 2_147_483_647
+    ) {
+      throw new Error(`GetTasksPageResponse has invalid ${field}`);
+    }
+
+    return value;
+  }
+
+  private requireNonNegativeInt32(
+    value: number | undefined,
+    field: string,
+  ): number {
+    if (
+      typeof value !== 'number' ||
+      !Number.isInteger(value) ||
+      value < 0 ||
+      value > 2_147_483_647
+    ) {
+      throw new Error(`GetTasksPageResponse has invalid ${field}`);
+    }
+
+    return value;
   }
 }

@@ -47,6 +47,19 @@ message GetTaskResponse {
   Task task = 1;
 }
 
+message GetTasksPageRequest {
+  int32 page_number = 1;
+  int32 page_size = 2;
+}
+
+message GetTasksPageResponse {
+  repeated Task items = 1;
+  int32 page_number = 2;
+  int32 page_size = 3;
+  int32 total_count = 4;
+  int32 total_pages = 5;
+}
+
 message StreamTasksRequest {}
 
 message UpdateTaskStatusRequest {
@@ -90,6 +103,8 @@ service TaskService {
   rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
 
   rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
+
+  rpc GetTasksPage(GetTasksPageRequest) returns (GetTasksPageResponse);
 
   // Returns a finite snapshot of all tasks.
   rpc StreamTasks(StreamTasksRequest) returns (stream Task);

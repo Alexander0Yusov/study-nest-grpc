@@ -7,6 +7,8 @@ import {
   CreateTaskResponse,
   GetTaskRequest,
   GetTaskResponse,
+  GetTasksPageRequest,
+  GetTasksPageResponse,
   StreamTasksRequest,
   Task,
   TASK_SERVICE_NAME,
@@ -41,6 +43,14 @@ export class TaskController implements TaskServiceControllerContract {
     metadata: Metadata,
   ): Promise<GetTaskResponse> {
     return this.taskService.getTask(request, requireGrpcUserId(metadata));
+  }
+
+  @GrpcMethod(TASK_SERVICE_NAME, 'GetTasksPage')
+  getTasksPage(
+    request: GetTasksPageRequest,
+    metadata: Metadata,
+  ): Promise<GetTasksPageResponse> {
+    return this.taskService.getTasksPage(request, requireGrpcUserId(metadata));
   }
 
   @GrpcMethod(TASK_SERVICE_NAME, 'StreamTasks')
