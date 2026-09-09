@@ -6,6 +6,8 @@ import { RpcException } from '@nestjs/microservices';
 import {
   CreateTaskRequest,
   CreateTaskResponse,
+  GetTaskRequest,
+  GetTaskResponse,
   Task,
   TaskStatus as ProtoTaskStatus,
   UpdateTaskStatusRequest,
@@ -75,6 +77,25 @@ export class TaskService {
     return {
       task: toProtoTask(savedTask),
     };
+  }
+
+  async getTask(
+    request: GetTaskRequest,
+    ownerId: number,
+  ): Promise<GetTaskResponse> {
+    const taskId = requireTaskId(request.taskId);
+    const task = await this.taskRepository.findOne({
+      where: { id: taskId, ownerId },
+    });
+
+    if (!task) {
+      throw new RpcException({
+        code: status.NOT_FOUND,
+        message: 'Task not found',
+      });
+    }
+
+    return { task: toProtoTask(task) };
   }
 
   streamTasks(ownerId: number): Observable<Task> {

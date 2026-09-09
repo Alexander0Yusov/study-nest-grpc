@@ -46,6 +46,14 @@ export interface CreateTaskResponse {
   task?: Task | undefined;
 }
 
+export interface GetTaskRequest {
+  taskId?: number | undefined;
+}
+
+export interface GetTaskResponse {
+  task?: Task | undefined;
+}
+
 export interface StreamTasksRequest {
 }
 
@@ -79,6 +87,8 @@ export const STUDY_TASKS_V1_PACKAGE_NAME = "study.tasks.v1";
 export interface TaskServiceClient {
   createTask(request: CreateTaskRequest, metadata?: Metadata): Observable<CreateTaskResponse>;
 
+  getTask(request: GetTaskRequest, metadata?: Metadata): Observable<GetTaskResponse>;
+
   /** Returns a finite snapshot of all tasks. */
 
   streamTasks(request: StreamTasksRequest, metadata?: Metadata): Observable<Task>;
@@ -101,6 +111,11 @@ export interface TaskServiceController {
     metadata?: Metadata,
   ): Promise<CreateTaskResponse> | Observable<CreateTaskResponse> | CreateTaskResponse;
 
+  getTask(
+    request: GetTaskRequest,
+    metadata?: Metadata,
+  ): Promise<GetTaskResponse> | Observable<GetTaskResponse> | GetTaskResponse;
+
   /** Returns a finite snapshot of all tasks. */
 
   streamTasks(request: StreamTasksRequest, metadata?: Metadata): Observable<Task>;
@@ -119,7 +134,7 @@ export interface TaskServiceController {
 
 export function TaskServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["createTask", "streamTasks"];
+    const grpcMethods: string[] = ["createTask", "getTask", "streamTasks"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("TaskService", method)(constructor.prototype[method], method, descriptor);

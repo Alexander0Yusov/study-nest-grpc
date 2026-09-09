@@ -5,6 +5,8 @@ import { Metadata } from '@grpc/grpc-js';
 import {
   CreateTaskRequest,
   CreateTaskResponse,
+  GetTaskRequest,
+  GetTaskResponse,
   StreamTasksRequest,
   Task,
   TASK_SERVICE_NAME,
@@ -31,6 +33,14 @@ export class TaskController implements TaskServiceControllerContract {
     metadata: Metadata,
   ): Promise<CreateTaskResponse> {
     return this.taskService.createTask(request, requireGrpcUserId(metadata));
+  }
+
+  @GrpcMethod(TASK_SERVICE_NAME, 'GetTask')
+  getTask(
+    request: GetTaskRequest,
+    metadata: Metadata,
+  ): Promise<GetTaskResponse> {
+    return this.taskService.getTask(request, requireGrpcUserId(metadata));
   }
 
   @GrpcMethod(TASK_SERVICE_NAME, 'StreamTasks')

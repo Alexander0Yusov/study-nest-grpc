@@ -5,6 +5,7 @@ import {
   Post,
   Patch,
   Delete,
+  Param,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -13,11 +14,14 @@ import {
   ApiCreatedResponse,
   ApiExtraModels,
   ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiServiceUnavailableResponse,
   ApiTags,
   ApiBearerAuth,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
 import { TaskService } from './task.service';
@@ -35,6 +39,7 @@ import {
   DeleteTasksResponseDto,
 } from './dto/delete-tasks-response.dto';
 import { CreateTaskResponseDto } from './dto/create-task-response.dto';
+import { GetTaskParamsDto } from './dto/get-task-params.dto';
 import { UpdateTaskStatusesResponseDto } from './dto/update-task-statuses-response.dto';
 import { GatewayErrorResponseDto } from '../common/swagger/error-response.dto';
 import { BEARER_ACCESS_STRATEGY_NAME } from '../auth/guards/bearer-access/bearer-access.constants';
@@ -67,6 +72,33 @@ export class TaskController {
     @AuthUser() principal: AuthenticatedPrincipal,
   ): Promise<CreateTaskResponseDto> {
     return this.taskService.create(dto, principal.userId);
+  }
+
+  @Get(':taskId')
+  @ApiOperation({
+    operationId: 'getTask',
+    summary: 'Get a task by ID',
+  })
+  @ApiParam({
+    name: 'taskId',
+    schema: {
+      type: 'integer',
+      format: 'int32',
+      minimum: 1,
+      maximum: 2_147_483_647,
+    },
+  })
+  @ApiOkResponse({ type: CreateTaskResponseDto })
+  @ApiBadRequestResponse({ type: GatewayErrorResponseDto })
+  @ApiUnauthorizedResponse({ type: GatewayErrorResponseDto })
+  @ApiNotFoundResponse({ type: GatewayErrorResponseDto })
+  @ApiServiceUnavailableResponse({ type: GatewayErrorResponseDto })
+  @ApiInternalServerErrorResponse({ type: GatewayErrorResponseDto })
+  getTask(
+    @Param() params: GetTaskParamsDto,
+    @AuthUser() principal: AuthenticatedPrincipal,
+  ): Promise<CreateTaskResponseDto> {
+    return this.taskService.getTask(params.taskId, principal.userId);
   }
 
   @Get()

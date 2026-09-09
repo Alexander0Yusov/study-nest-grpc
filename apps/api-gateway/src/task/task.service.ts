@@ -7,6 +7,7 @@ import {
   Task,
   TASK_SERVICE_NAME,
   TaskServiceClient,
+  GetTaskResponse,
   UpdateTaskStatusRequest,
   UpdateTaskStatusesResponse,
   DeleteTaskRequest,
@@ -59,6 +60,24 @@ export class TaskService implements OnModuleInit {
 
     if (!response.task) {
       throw new Error('CreateTaskResponse has no task');
+    }
+
+    return { task: toTaskResponseDto(response.task) };
+  }
+
+  async getTask(
+    taskId: number,
+    userId: number,
+  ): Promise<CreateTaskResponseDto> {
+    const response: GetTaskResponse = await firstValueFrom(
+      this.taskServiceClient.getTask(
+        { taskId },
+        this.createUserMetadata(userId),
+      ),
+    );
+
+    if (!response.task) {
+      throw new Error('GetTaskResponse has no task');
     }
 
     return { task: toTaskResponseDto(response.task) };

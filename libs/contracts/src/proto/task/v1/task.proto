@@ -39,6 +39,14 @@ message CreateTaskResponse {
   Task task = 1;
 }
 
+message GetTaskRequest {
+  int32 task_id = 1;
+}
+
+message GetTaskResponse {
+  Task task = 1;
+}
+
 message StreamTasksRequest {}
 
 message UpdateTaskStatusRequest {
@@ -80,6 +88,8 @@ message DeleteTaskResponse {
 
 service TaskService {
   rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
+
+  rpc GetTask(GetTaskRequest) returns (GetTaskResponse);
 
   // Returns a finite snapshot of all tasks.
   rpc StreamTasks(StreamTasksRequest) returns (stream Task);
