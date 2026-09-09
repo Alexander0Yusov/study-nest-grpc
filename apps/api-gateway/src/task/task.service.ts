@@ -259,7 +259,9 @@ export class TaskService implements OnModuleInit {
     requestedPageNumber: number,
     requestedPageSize: number,
   ): GetTasksPageResponseDto {
-    if (!Array.isArray(response.items)) {
+    const items = response.items ?? [];
+
+    if (!Array.isArray(items)) {
       throw new Error('GetTasksPageResponse has invalid items');
     }
 
@@ -286,7 +288,7 @@ export class TaskService implements OnModuleInit {
     }
 
     return {
-      items: response.items.map(toTaskResponseDto),
+      items: items.map(toTaskResponseDto),
       pageNumber,
       pageSize,
       totalCount,
