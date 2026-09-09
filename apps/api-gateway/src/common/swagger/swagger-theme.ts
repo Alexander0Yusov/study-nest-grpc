@@ -35,6 +35,11 @@ html[data-swagger-theme='dark'] {
   --swagger-overlay: rgba(1, 4, 9, 0.72);
 }
 
+html[data-swagger-theme='dark'] .swagger-ui .authorization__btn svg,
+html[data-swagger-theme='dark'] .swagger-ui .opblock-control-arrow .arrow {
+  fill: var(--swagger-text);
+}
+
 html[data-swagger-theme] body,
 html[data-swagger-theme] .swagger-ui,
 html[data-swagger-theme] .swagger-ui .wrapper {

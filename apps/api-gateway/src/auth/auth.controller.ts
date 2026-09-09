@@ -1,15 +1,19 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Inject,
   Post,
+  Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiBody,
   ApiConflictResponse,
   ApiCreatedResponse,
@@ -19,7 +23,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { FastifyReply } from 'fastify';
+import { FastifyReply, FastifyRequest } from 'fastify';
 
 import { GatewayErrorResponseDto } from '../common/swagger/error-response.dto';
 import { authConfig } from '../config/auth.config';
@@ -28,6 +32,13 @@ import { LoginRequestDto } from './dto/login-request.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import { RegisterRequestDto } from './dto/register-request.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
+import { BEARER_ACCESS_STRATEGY_NAME } from './guards/bearer-access/bearer-access.constants';
+import { BearerAccessGuard } from './guards/bearer-access/bearer-access.guard';
+import { AuthenticatedPrincipal } from './types/authenticated-principal';
+
+type AuthenticatedFastifyRequest = FastifyRequest & {
+  user: AuthenticatedPrincipal;
+};
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -81,5 +92,20 @@ export class AuthController {
     });
 
     return { accessToken: result.accessToken };
+  }
+
+  @Get('me')
+  @UseGuards(BearerAccessGuard)
+  @ApiBearerAuth(BEARER_ACCESS_STRATEGY_NAME)
+  @ApiOperation({
+    operationId: 'getCurrentUser',
+    summary: 'Get the authenticated user',
+  })
+  @ApiOkResponse({ type: RegisterResponseDto })
+  @ApiUnauthorizedResponse({ type: GatewayErrorResponseDto })
+  public getCurrentUser(
+    @Req() request: AuthenticatedFastifyRequest,
+  ): Promise<RegisterResponseDto> {
+    return this.authService.getCurrentUser(request.user);
   }
 }

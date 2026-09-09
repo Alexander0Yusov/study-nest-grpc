@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
 
 import { authConfig } from '../config/auth.config';
 import { SessionModule } from '../session/session.module';
@@ -8,17 +9,26 @@ import { UserModule } from '../user/user.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PasswordHasherService } from './infrastructure/crypto/password-hasher.service';
+import { BearerAccessGuard } from './guards/bearer-access/bearer-access.guard';
+import { BearerAccessStrategy } from './guards/bearer-access/bearer-access.strategy';
 import {
   ACCESS_TOKEN_JWT_SERVICE,
   REFRESH_TOKEN_JWT_SERVICE,
 } from './infrastructure/constants/jwt-service.tokens';
 
 @Module({
-  imports: [ConfigModule.forFeature(authConfig), UserModule, SessionModule],
+  imports: [
+    ConfigModule.forFeature(authConfig),
+    PassportModule,
+    UserModule,
+    SessionModule,
+  ],
   controllers: [AuthController],
   providers: [
     AuthService,
     PasswordHasherService,
+    BearerAccessStrategy,
+    BearerAccessGuard,
     {
       provide: ACCESS_TOKEN_JWT_SERVICE,
       useFactory: (config: ConfigType<typeof authConfig>): JwtService =>

@@ -13,6 +13,7 @@ import {
   REFRESH_TOKEN_JWT_SERVICE,
 } from './infrastructure/constants/jwt-service.tokens';
 import { PasswordHasherService } from './infrastructure/crypto/password-hasher.service';
+import { AuthenticatedPrincipal } from './types/authenticated-principal';
 import {
   AccessTokenPayload,
   LoginResult,
@@ -100,6 +101,23 @@ export class AuthService {
       accessToken,
       refreshToken,
       refreshExpiresAt,
+    };
+  }
+
+  public async getCurrentUser(
+    principal: AuthenticatedPrincipal,
+  ): Promise<RegisterResponseDto> {
+    const user = await this.usersService.findById(principal.userId);
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+      },
     };
   }
 }

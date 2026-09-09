@@ -25,4 +25,8 @@ export class SessionsService {
 
     return this.sessionRepository.save(Session.create(dto));
   }
+
+  public findById(id: number): Promise<Session | null> {
+    return this.sessionRepository.findOneBy({ id });
+  }
 }

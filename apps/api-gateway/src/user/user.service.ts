@@ -39,6 +39,10 @@ export class UsersService {
       .getOne();
   }
 
+  public findById(id: number): Promise<User | null> {
+    return this.userRepository.findOneBy({ id });
+  }
+
   private isUniqueViolation(error: unknown): boolean {
     if (!(error instanceof QueryFailedError)) {
       return false;
