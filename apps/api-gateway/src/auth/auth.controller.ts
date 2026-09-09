@@ -19,6 +19,7 @@ import {
   ApiCookieAuth,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -118,6 +119,26 @@ export class AuthController {
     return { accessToken: result.accessToken };
   }
 
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(BearerAccessGuard)
+  @ApiBearerAuth(BEARER_ACCESS_STRATEGY_NAME)
+  @ApiOperation({
+    operationId: 'logoutCurrentSession',
+    summary: 'Log out the current session',
+    description:
+      'The current Session is revoked and the refresh cookie is removed.',
+  })
+  @ApiNoContentResponse({ description: 'The current Session was revoked.' })
+  @ApiUnauthorizedResponse({ type: GatewayErrorResponseDto })
+  public async logout(
+    @Req() request: AuthenticatedFastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<void> {
+    await this.authService.logout(request.user);
+    this.clearRefreshCookie(reply);
+  }
+
   @Get('me')
   @UseGuards(BearerAccessGuard)
   @ApiBearerAuth(BEARER_ACCESS_STRATEGY_NAME)
@@ -144,6 +165,15 @@ export class AuthController {
       sameSite: this.config.cookieSameSite,
       path: this.config.refreshCookiePath,
       expires: refreshExpiresAt,
+    });
+  }
+
+  private clearRefreshCookie(reply: FastifyReply): void {
+    reply.clearCookie(this.config.refreshCookieName, {
+      httpOnly: true,
+      secure: this.config.cookieSecure,
+      sameSite: this.config.cookieSameSite,
+      path: this.config.refreshCookiePath,
     });
   }
 }

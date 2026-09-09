@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { CreateSessionDomainDto } from './dto/create-session-domain.dto';
+import { RevokeSessionInput } from './dto/revoke-session.input';
 import { RotateRefreshTokenInput } from './dto/rotate-refresh-token.input';
 import { Session } from './entities/session.entity';
 
@@ -29,6 +30,17 @@ export class SessionsService {
 
   public findById(id: number): Promise<Session | null> {
     return this.sessionRepository.findOneBy({ id });
+  }
+
+  public async revoke(input: RevokeSessionInput): Promise<void> {
+    await this.sessionRepository
+      .createQueryBuilder()
+      .update(Session)
+      .set({ revokedAt: () => 'COALESCE(revoked_at, :revokedAt)' })
+      .where('id = :sessionId', { sessionId: input.sessionId })
+      .andWhere('user_id = :userId', { userId: input.userId })
+      .setParameters({ revokedAt: input.revokedAt })
+      .execute();
   }
 
   public rotateRefreshToken(

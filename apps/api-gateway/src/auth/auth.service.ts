@@ -116,6 +116,14 @@ export class AuthService {
     );
   }
 
+  public async logout(principal: AuthenticatedPrincipal): Promise<void> {
+    await this.sessionsService.revoke({
+      sessionId: principal.sessionId,
+      userId: principal.userId,
+      revokedAt: new Date(),
+    });
+  }
+
   public async getCurrentUser(
     principal: AuthenticatedPrincipal,
   ): Promise<RegisterResponseDto> {
