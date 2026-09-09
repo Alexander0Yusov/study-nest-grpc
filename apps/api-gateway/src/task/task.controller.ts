@@ -51,6 +51,14 @@ import { BearerAccessGuard } from '../auth/guards/bearer-access/bearer-access.gu
 import { AuthenticatedPrincipal } from '../auth/types/authenticated-principal';
 import { AuthUser } from '../utils/decorators/auth-user.decorator';
 
+const GRPC_STREAMING_TRAINING_NOTICE =
+  '<span style="color: #d32f2f; font-weight: 700;">' +
+  'УЧЕБНОЕ ПРИМЕЧАНИЕ: внутренняя реализация этого endpoint использует ' +
+  'gRPC streaming по инициативе автора проекта исключительно для приобретения ' +
+  'практического навыка организации стриминга. Для данной бизнес-задачи ' +
+  'потоковая модель не является оптимальным инфраструктурным решением.' +
+  '</span>';
+
 @ApiTags('Tasks')
 @ApiExtraModels(DeletedTaskResultDto, DeleteTaskErrorResultDto)
 @UseGuards(BearerAccessGuard)
@@ -147,12 +155,19 @@ export class TaskController {
     return this.taskService.getTask(params.taskId, principal.userId);
   }
 
+  /**
+   * Учебное примечание: внутренняя реализация этого HTTP endpoint использует
+   * gRPC streaming по инициативе автора проекта исключительно для приобретения
+   * практического навыка организации стриминга. Для данной бизнес-задачи
+   * потоковая модель не является оптимальным инфраструктурным решением.
+   */
   @Get()
   @ApiOperation({
     operationId: 'getTasks',
     summary: 'Get all tasks using gRPC server streaming',
-    description:
-      'Gateway receives a finite server stream and returns all received tasks as one HTTP array. An empty gRPC stream produces 200 with items: [].',
+    description: `${GRPC_STREAMING_TRAINING_NOTICE}
+
+Gateway receives a finite server stream and returns all received tasks as one HTTP array. An empty gRPC stream produces 200 with items: [].`,
   })
   @ApiOkResponse({ type: GetTasksResponseDto })
   @ApiServiceUnavailableResponse({ type: GatewayErrorResponseDto })
@@ -165,12 +180,19 @@ export class TaskController {
     return { items: items.map(toTaskResponseDto) };
   }
 
+  /**
+   * Учебное примечание: внутренняя реализация этого HTTP endpoint использует
+   * gRPC streaming по инициативе автора проекта исключительно для приобретения
+   * практического навыка организации стриминга. Для данной бизнес-задачи
+   * потоковая модель не является оптимальным инфраструктурным решением.
+   */
   @Patch('status')
   @ApiOperation({
     operationId: 'updateTaskStatuses',
     summary: 'Update statuses for multiple tasks',
-    description:
-      'Gateway sends one client-stream message per task ID. Task Service performs one bulk database update and returns one summary response.',
+    description: `${GRPC_STREAMING_TRAINING_NOTICE}
+
+Gateway sends one client-stream message per task ID. Task Service performs one bulk database update and returns one summary response.`,
   })
   @ApiBody({ type: UpdateTaskStatusesRequestDto })
   @ApiOkResponse({ type: UpdateTaskStatusesResponseDto })
@@ -184,12 +206,19 @@ export class TaskController {
     return this.taskService.updateTaskStatuses(dto, principal.userId);
   }
 
+  /**
+   * Учебное примечание: внутренняя реализация этого HTTP endpoint использует
+   * gRPC streaming по инициативе автора проекта исключительно для приобретения
+   * практического навыка организации стриминга. Для данной бизнес-задачи
+   * потоковая модель не является оптимальным инфраструктурным решением.
+   */
   @Delete('batch')
   @ApiOperation({
     operationId: 'deleteTasks',
     summary: 'Delete multiple tasks',
-    description:
-      'Gateway exchanges bidirectional gRPC streams. Each incoming ID produces one deleted task or a per-item error; Gateway collects the finite response stream into an HTTP array.',
+    description: `${GRPC_STREAMING_TRAINING_NOTICE}
+
+Gateway exchanges bidirectional gRPC streams. Each incoming ID produces one deleted task or a per-item error; Gateway collects the finite response stream into an HTTP array.`,
   })
   @ApiBody({ type: DeleteTasksRequestDto })
   @ApiOkResponse({ type: DeleteTasksResponseDto })

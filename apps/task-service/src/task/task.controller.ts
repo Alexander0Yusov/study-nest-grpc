@@ -53,6 +53,12 @@ export class TaskController implements TaskServiceControllerContract {
     return this.taskService.getTasksPage(request, requireGrpcUserId(metadata));
   }
 
+  /**
+   * Учебное примечание: этот gRPC streaming-сценарий реализован по инициативе
+   * автора проекта исключительно для приобретения практического навыка
+   * организации стриминга. Для данной бизнес-задачи потоковая модель
+   * не является оптимальным инфраструктурным решением.
+   */
   @GrpcMethod(TASK_SERVICE_NAME, 'StreamTasks')
   streamTasks(
     _request: StreamTasksRequest,
@@ -61,6 +67,12 @@ export class TaskController implements TaskServiceControllerContract {
     return this.taskService.streamTasks(requireGrpcUserId(metadata));
   }
 
+  /**
+   * Учебное примечание: этот gRPC streaming-сценарий реализован по инициативе
+   * автора проекта исключительно для приобретения практического навыка
+   * организации стриминга. Для данной бизнес-задачи потоковая модель
+   * не является оптимальным инфраструктурным решением.
+   */
   @GrpcStreamMethod(TASK_SERVICE_NAME, 'UpdateTaskStatuses')
   updateTaskStatuses(
     requests: Observable<UpdateTaskStatusRequest>,
@@ -72,6 +84,12 @@ export class TaskController implements TaskServiceControllerContract {
     );
   }
 
+  /**
+   * Учебное примечание: этот gRPC streaming-сценарий реализован по инициативе
+   * автора проекта исключительно для приобретения практического навыка
+   * организации стриминга. Для данной бизнес-задачи потоковая модель
+   * не является оптимальным инфраструктурным решением.
+   */
   @GrpcStreamMethod(TASK_SERVICE_NAME, 'DeleteTasks')
   deleteTasks(
     requests: Observable<DeleteTaskRequest>,

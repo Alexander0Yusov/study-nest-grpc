@@ -8,7 +8,12 @@
   "scripts": {
     "build": "nest build",
     "start": "nest start",
+    "build:contracts": "nest build contracts",
+    "proto:copy-assets": "node scripts/copy-proto-assets.js",
     "proto:generate": "node scripts/generate-proto.cjs",
+    "infra:up": "docker compose version && docker compose -f compose.yaml up -d --wait",
+    "infra:stop": "docker compose -f compose.yaml stop",
+    "infra:down": "docker compose -f compose.yaml down",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "build:api-gateway": "nest build api-gateway && node scripts/copy-proto-assets.cjs api-gateway",
     "build:task-service": "nest build task-service && node scripts/copy-proto-assets.cjs task-service",
