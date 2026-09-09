@@ -29,6 +29,16 @@ export class UsersService {
     }
   }
 
+  public findByEmailForAuthentication(email: string): Promise<User | null> {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.passwordHash')
+      .where('user.email = :email', { email: normalizedEmail })
+      .getOne();
+  }
+
   private isUniqueViolation(error: unknown): boolean {
     if (!(error instanceof QueryFailedError)) {
       return false;
