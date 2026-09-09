@@ -1,8 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsEmail, IsString } from 'class-validator';
+import {
+  IsByteLength,
+  IsEmail,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
-import { MaxUtf8Bytes } from './max-utf8-bytes.decorator';
+import { passwordConstraints } from '../constants/password.constraints';
 
 export class LoginRequestDto {
   @ApiProperty({ example: 'user@example.com', format: 'email' })
@@ -12,8 +18,17 @@ export class LoginRequestDto {
   @IsEmail()
   public email!: string;
 
-  @ApiProperty({ example: 'strong-password' })
+  @ApiProperty({
+    format: 'password',
+    minLength: passwordConstraints.minLength,
+    maxLength: passwordConstraints.maxLength,
+    description: 'Maximum 72 UTF-8 bytes.',
+  })
   @IsString()
-  @MaxUtf8Bytes(72)
+  @MinLength(passwordConstraints.minLength)
+  @MaxLength(passwordConstraints.maxLength)
+  @IsByteLength(0, passwordConstraints.maxUtf8Bytes, {
+    message: 'password must not exceed 72 UTF-8 bytes',
+  })
   public password!: string;
 }
