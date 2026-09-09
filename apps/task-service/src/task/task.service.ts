@@ -310,6 +310,7 @@ export class TaskService {
           }),
         );
       }),
+
       tap({
         next: () => {
           sentCount += 1;

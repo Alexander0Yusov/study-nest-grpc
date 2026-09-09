@@ -54,29 +54,29 @@
 | NEST-042 | Persistence: UpdateTaskStatus            | Persisted update                               | PLANNED  | Integration test            | — будет добавлено в слое 6                 |
 | NEST-043 | Persistence: GetAllTasks                 | Persisted list                                 | PLANNED  | Integration test            | — будет добавлено в слое 6                 |
 | NEST-044 | TypeORM: migrations                      | Reproducible schema changes                    | PLANNED  | Clean DB migration run      | — будет добавлено в слое 6                 |
-| NEST-045 | Authentication и Authorization           | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-046 | AuthModule                               | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-047 | User Entity                              | Базовый MVP без users                          | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-048 | User Repository                          | Базовый MVP без users                          | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-049 | signup                                   | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-050 | credentials/password validation          | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-051 | username conflict                        | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-052 | безопасное хранение пароля               | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-053 | bcrypt                                   | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-054 | signin                                   | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-055 | JWT                                      | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-056 | JWT Module                               | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-057 | Passport                                 | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-058 | подписание JWT                           | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-059 | JWT validation                           | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-060 | custom GetUser decorator                 | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-061 | guards                                   | Базовый MVP без auth                           | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-062 | Ownership: связь User и Task             | Базовый MVP без ownership                      | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-063 | Ownership: пользователь владеет задачами | Базовый MVP без ownership                      | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-064 | Ownership: сериализация User             | Базовый MVP без ownership                      | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-065 | Ownership: ограничение списка задач      | Базовый MVP без ownership                      | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-066 | Ownership: ограничение получения по ID   | Базовый MVP без ownership                      | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
-| NEST-067 | Ownership: ограничение update/delete     | Базовый MVP без ownership                      | DEFERRED | Deferred by plan            | — будет добавлено после отдельного решения |
+| NEST-045 | Authentication и Authorization           | Auth flow и task ownership                     | VERIFIED | register/login/me/refresh/logout и owner scope проверены | [AuthController](../apps/api-gateway/src/auth/auth.controller.ts), `d4e36c4`, `76152d6`, `57f892e`, `36151ed`, `4d18b48`, `c5ed874` |
+| NEST-046 | AuthModule                               | Gateway AuthModule                             | VERIFIED | Auth providers, strategies и guards собраны | [AuthModule](../apps/api-gateway/src/auth/auth.module.ts), `d4e36c4`, `76152d6`, `57f892e`, `36151ed` |
+| NEST-047 | User Entity                              | Gateway User entity                            | VERIFIED | Email/password hash persistence проверены | [User](../apps/api-gateway/src/user/entities/user.entity.ts), `6af7946` |
+| NEST-048 | User Repository                          | TypeORM Repository<User> через UsersService    | VERIFIED | Без custom repository wrapper | [UsersService](../apps/api-gateway/src/user/user.service.ts), `d4e36c4` |
+| NEST-049 | signup                                   | POST /auth/register                            | VERIFIED | Registration smoke: 201 и duplicate 409 | [AuthController.register](../apps/api-gateway/src/auth/auth.controller.ts), `d4e36c4` |
+| NEST-050 | credentials/password validation          | Email/password DTO validation                  | VERIFIED | Email normalization, length и UTF-8 bcrypt limit | [RegisterRequestDto](../apps/api-gateway/src/auth/dto/register-request.dto.ts), `d4e36c4` |
+| NEST-051 | username conflict                        | Normalized email conflict                       | VERIFIED | PostgreSQL 23505 → HTTP 409 | [UsersService.create](../apps/api-gateway/src/user/user.service.ts), `d4e36c4` |
+| NEST-052 | безопасное хранение пароля               | password_hash select:false                      | VERIFIED | Password/hash не возвращаются клиенту | [User](../apps/api-gateway/src/user/entities/user.entity.ts), `6af7946`, `d4e36c4` |
+| NEST-053 | bcrypt                                   | PasswordHasherService                           | VERIFIED | bcrypt hash/compare с config rounds | [PasswordHasherService](../apps/api-gateway/src/auth/infrastructure/crypto/password-hasher.service.ts), `d4e36c4` |
+| NEST-054 | signin                                   | POST /auth/login                                | VERIFIED | Login создаёт Session и выдаёт access token | [AuthController.login](../apps/api-gateway/src/auth/auth.controller.ts), `76152d6` |
+| NEST-055 | JWT                                      | Access/refresh JWT                              | VERIFIED | Раздельные secrets и payloads | [AuthService](../apps/api-gateway/src/auth/auth.service.ts), `76152d6` |
+| NEST-056 | JWT Module                               | Два настроенных JwtService providers            | VERIFIED | Access и refresh providers проверены build/smoke | [AuthModule](../apps/api-gateway/src/auth/auth.module.ts), `76152d6` |
+| NEST-057 | Passport                                 | Bearer access/refresh strategies                | VERIFIED | Passport strategies и guards работают | [auth/guards](../apps/api-gateway/src/auth/guards), `57f892e`, `36151ed` |
+| NEST-058 | подписание JWT                           | signAsync для access/refresh                    | VERIFIED | Login и refresh выпускают новую token pair | [AuthService.issueTokenPair](../apps/api-gateway/src/auth/auth.service.ts), `76152d6`, `36151ed` |
+| NEST-059 | JWT validation                           | Signature, expiry, type, claims и Session state | VERIFIED | Access проверяет активную Session; refresh version rotation | [BearerAccessStrategy](../apps/api-gateway/src/auth/guards/bearer-access/bearer-access.strategy.ts), `57f892e`, `36151ed`, `4d18b48` |
+| NEST-060 | custom GetUser decorator                 | Typed request.user без custom decorator         | DEFERRED | Custom decorator отсутствует | [AuthController](../apps/api-gateway/src/auth/auth.controller.ts), `57f892e` |
+| NEST-061 | guards                                   | Bearer access/refresh guards                    | VERIFIED | /auth/me, /auth/refresh и /auth/logout защищены | [auth/guards](../apps/api-gateway/src/auth/guards), `57f892e`, `36151ed`, `4d18b48` |
+| NEST-062 | Ownership: связь User и Task             | Scalar User.id → x-user-id → Task.ownerId       | VERIFIED | Между разными БД нет TypeORM relation/FK | [TaskEntity](../apps/task-service/src/task/entities/task.entity.ts), `c5ed874` |
+| NEST-063 | Ownership: пользователь владеет задачами | Owner-scoped Task operations                    | VERIFIED | A/B ownership smoke проверен | [TaskService](../apps/task-service/src/task/task.service.ts), `c5ed874` |
+| NEST-064 | Ownership: сериализация User             | Safe User response DTO                          | VERIFIED | HTTP response не раскрывает passwordHash | [RegisterResponseDto](../apps/api-gateway/src/auth/dto/register-response.dto.ts), `d4e36c4` |
+| NEST-065 | Ownership: ограничение списка задач      | List scoped by owner_id                         | VERIFIED | A видит только Task A, B — только Task B | [TaskService.streamTasks](../apps/task-service/src/task/task.service.ts), `c5ed874` |
+| NEST-066 | Ownership: ограничение получения по ID   | User-facing get-by-id отсутствует               | DEFERRED | Нет endpoint, который можно owner-scope проверить | — |
+| NEST-067 | Ownership: ограничение update/delete     | Owner-scoped bulk update и bidi delete          | VERIFIED | Чужая Task не обновляется и возвращает NOT_FOUND | [TaskService](../apps/task-service/src/task/task.service.ts), `c5ed874` |
 
 ## gRPC
 
@@ -91,7 +91,7 @@
 | GRPC-007 | Theory: streams и frames                     | Explain HTTP/2 frames                                                  | PLANNED        | Transport lab                             | — будет добавлено в слое 12 |
 | GRPC-008 | Theory: HPACK                                | Explain header compression                                             | PLANNED        | Transport lab                             | — будет добавлено в слое 12 |
 | GRPC-009 | Theory: binary serialization                 | Compare protobuf payloads                                              | PLANNED        | Payload observation                       | — будет добавлено в слое 12 |
-| GRPC-010 | Theory: gRPC metadata                        | Request metadata model                                                 | PLANNED        | Metadata test                             | — будет добавлено в слое 10 |
+| GRPC-010 | Theory: gRPC metadata                        | x-user-id metadata for four Task RPC forms                            | VERIFIED       | Gateway write, Task Service strict read; no-metadata RPC → UNAUTHENTICATED | [requireGrpcUserId](../apps/task-service/src/task/require-grpc-user-id.ts), `c5ed874` |
 | GRPC-011 | Theory: status codes                         | gRPC error semantics                                                   | PLANNED        | Mapper test                               | — будет добавлено в слое 5  |
 | GRPC-012 | Theory: четыре типа API                      | Unary and streaming map                                                | PLANNED        | Theory note                               | — будет добавлено в слое 4  |
 | GRPC-013 | Theory: scalability                          | Boundary and connection trade-offs                                     | PLANNED        | Architecture note                         | — будет добавлено в слое 12 |
@@ -127,10 +127,10 @@
 | GRPC-043 | Advanced: error handling                     | Neutral errors and mapping                                             | PLANNED        | Unit/e2e                                  | — будет добавлено в слое 5  |
 | GRPC-044 | Advanced: deadlines                          | Deadline propagation                                                   | PLANNED        | Deadline test                             | — будет добавлено в слое 10 |
 | GRPC-045 | Advanced: cancellation                       | Cancellation propagation                                               | PLANNED        | Cancel test                               | — будет добавлено в слое 10 |
-| GRPC-046 | Advanced: SSL/TLS                            | Local TLS                                                              | PLANNED        | TLS integration test                      | — будет добавлено в слое 11 |
-| GRPC-047 | Advanced: mTLS                               | Local client certificate auth                                          | PLANNED        | mTLS integration test                     | — будет добавлено в слое 11 |
+| GRPC-046 | Advanced: SSL/TLS                            | Исключено из scope проекта решением руководителя                      | NOT_APPLICABLE | TLS integration test не выполняется       | — |
+| GRPC-047 | Advanced: mTLS                               | Исключено из scope проекта решением руководителя                      | NOT_APPLICABLE | mTLS integration test не выполняется      | — |
 | GRPC-048 | Advanced: interceptors                       | Cross-cutting transport concerns                                       | PLANNED        | Interceptor test                          | — будет добавлено в слое 10 |
-| GRPC-049 | Advanced: metadata                           | Pass and read metadata                                                 | PLANNED        | Metadata test                             | — будет добавлено в слое 10 |
+| GRPC-049 | Advanced: metadata                           | Pass/read x-user-id metadata                                          | VERIFIED       | Unary, server/client/bidi streaming и no-metadata UNAUTHENTICATED проверены | [TaskController](../apps/task-service/src/task/task.controller.ts), `c5ed874` |
 | GRPC-050 | Advanced: message size limits                | Configure safe limits                                                  | PLANNED        | Oversized message test                    | — будет добавлено в слое 10 |
 | GRPC-051 | Observability: активные RPC streams          | Stream gauge                                                           | PLANNED        | Metrics test                              | — будет добавлено в слое 12 |
 | GRPC-052 | Observability: сообщения в stream            | Message counter                                                        | PLANNED        | Metrics test                              | — будет добавлено в слое 12 |
@@ -216,3 +216,11 @@ TaskEntity отделена от protobuf Task;
 synchronize: true используется только для учебной локальной среды;
 CreateTask сохраняет задачу в PostgreSQL вместо in-memory Map;
 UpdateDateColumn обновляется при массовом изменении статуса.
+
+Auth flow завершён: register → login → me → refresh rotation → logout;
+JWT не хранятся в БД;
+access authentication проверяет активную Session;
+refresh rotation использует Session version;
+Task ownership передаётся через x-user-id metadata во всех четырёх RPC;
+чужая Task представляется как NOT_FOUND;
+TLS/mTLS исключены из scope проекта решением руководителя; trust boundary и назначение TLS/mTLS разобраны без TLS lab.
