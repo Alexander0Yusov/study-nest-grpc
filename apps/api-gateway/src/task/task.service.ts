@@ -1,5 +1,6 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
+import { Metadata } from '@grpc/grpc-js';
 import { firstValueFrom } from 'rxjs';
 
 import {
@@ -9,6 +10,7 @@ import {
   UpdateTaskStatusRequest,
   UpdateTaskStatusesResponse,
   DeleteTaskRequest,
+  GRPC_USER_ID_METADATA_KEY,
 } from '@app/contracts';
 
 import { Logger } from '@nestjs/common';
@@ -39,12 +41,20 @@ export class TaskService implements OnModuleInit {
       this.grpcTaskClient.getService<TaskServiceClient>(TASK_SERVICE_NAME);
   }
 
-  async create(dto: CreateTaskRequestDto): Promise<CreateTaskResponseDto> {
+  async create(
+    dto: CreateTaskRequestDto,
+    userId: number,
+  ): Promise<CreateTaskResponseDto> {
+    const metadata = this.createUserMetadata(userId);
+
     const response = await firstValueFrom(
-      this.taskServiceClient.createTask({
-        title: dto.title,
-        description: dto.description,
-      }),
+      this.taskServiceClient.createTask(
+        {
+          title: dto.title,
+          description: dto.description,
+        },
+        metadata,
+      ),
     );
 
     if (!response.task) {
@@ -54,38 +64,41 @@ export class TaskService implements OnModuleInit {
     return { task: toTaskResponseDto(response.task) };
   }
 
-  getTasks(): Promise<Task[]> {
+  getTasks(userId: number): Promise<Task[]> {
     const startedAt = Date.now();
     let messageCount = 0;
 
     this.logger.log('[StreamTasks] Receiving stream started');
 
     return lastValueFrom(
-      this.taskServiceClient.streamTasks({}).pipe(
-        tap({
-          next: () => {
-            messageCount += 1;
-            this.logger.log(`[StreamTasks] Received message ${messageCount}`);
-          },
-          complete: () => {
-            this.logger.log(
-              `[StreamTasks] Receiving completed: messages=${messageCount}; durationMs=${Date.now() - startedAt}`,
-            );
-          },
-          error: () => {
-            this.logger.error(
-              `[StreamTasks] Receiving failed: messages=${messageCount}; durationMs=${Date.now() - startedAt}`,
-            );
-          },
-        }),
+      this.taskServiceClient
+        .streamTasks({}, this.createUserMetadata(userId))
+        .pipe(
+          tap({
+            next: () => {
+              messageCount += 1;
+              this.logger.log(`[StreamTasks] Received message ${messageCount}`);
+            },
+            complete: () => {
+              this.logger.log(
+                `[StreamTasks] Receiving completed: messages=${messageCount}; durationMs=${Date.now() - startedAt}`,
+              );
+            },
+            error: () => {
+              this.logger.error(
+                `[StreamTasks] Receiving failed: messages=${messageCount}; durationMs=${Date.now() - startedAt}`,
+              );
+            },
+          }),
 
-        toArray(),
-      ),
+          toArray(),
+        ),
     );
   }
 
   updateTaskStatuses(
     dto: UpdateTaskStatusesRequestDto,
+    userId: number,
   ): Promise<UpdateTaskStatusesResponse> {
     const startedAt = Date.now();
     let sentCount = 0;
@@ -115,24 +128,29 @@ export class TaskService implements OnModuleInit {
     );
 
     return firstValueFrom(
-      this.taskServiceClient.updateTaskStatuses(requests$).pipe(
-        tap({
-          next: (response) => {
-            this.logger.log(
-              `[UpdateTaskStatuses] Response received: requested=${response.requestedCount ?? 0}; updated=${response.updatedCount ?? 0}; durationMs=${Date.now() - startedAt}`,
-            );
-          },
-          error: () => {
-            this.logger.error(
-              `[UpdateTaskStatuses] Request failed: sent=${sentCount}; durationMs=${Date.now() - startedAt}`,
-            );
-          },
-        }),
-      ),
+      this.taskServiceClient
+        .updateTaskStatuses(requests$, this.createUserMetadata(userId))
+        .pipe(
+          tap({
+            next: (response) => {
+              this.logger.log(
+                `[UpdateTaskStatuses] Response received: requested=${response.requestedCount ?? 0}; updated=${response.updatedCount ?? 0}; durationMs=${Date.now() - startedAt}`,
+              );
+            },
+            error: () => {
+              this.logger.error(
+                `[UpdateTaskStatuses] Request failed: sent=${sentCount}; durationMs=${Date.now() - startedAt}`,
+              );
+            },
+          }),
+        ),
     );
   }
 
-  deleteTasks(dto: DeleteTasksRequestDto): Promise<DeleteTasksResponseDto> {
+  deleteTasks(
+    dto: DeleteTasksRequestDto,
+    userId: number,
+  ): Promise<DeleteTasksResponseDto> {
     const startedAt = Date.now();
 
     let sentCount = 0;
@@ -160,27 +178,43 @@ export class TaskService implements OnModuleInit {
     );
 
     return lastValueFrom(
-      this.taskServiceClient.deleteTasks(requests$).pipe(
-        map((response) => toDeleteTaskResultDto(response)),
-        tap({
-          next: () => {
-            receivedCount += 1;
-            this.logger.log(`[DeleteTasks] Received response ${receivedCount}`);
-          },
-          complete: () => {
-            this.logger.log(
-              `[DeleteTasks] Bidirectional stream completed: sent=${sentCount}; received=${receivedCount}; durationMs=${Date.now() - startedAt}`,
-            );
-          },
-          error: () => {
-            this.logger.error(
-              `[DeleteTasks] Bidirectional stream failed: sent=${sentCount}; received=${receivedCount}; durationMs=${Date.now() - startedAt}`,
-            );
-          },
-        }),
-        toArray(),
-        map((results): DeleteTasksResponseDto => ({ results })),
-      ),
+      this.taskServiceClient
+        .deleteTasks(requests$, this.createUserMetadata(userId))
+        .pipe(
+          map((response) => toDeleteTaskResultDto(response)),
+          tap({
+            next: () => {
+              receivedCount += 1;
+              this.logger.log(
+                `[DeleteTasks] Received response ${receivedCount}`,
+              );
+            },
+            complete: () => {
+              this.logger.log(
+                `[DeleteTasks] Bidirectional stream completed: sent=${sentCount}; received=${receivedCount}; durationMs=${Date.now() - startedAt}`,
+              );
+            },
+            error: () => {
+              this.logger.error(
+                `[DeleteTasks] Bidirectional stream failed: sent=${sentCount}; received=${receivedCount}; durationMs=${Date.now() - startedAt}`,
+              );
+            },
+          }),
+          toArray(),
+          map((results): DeleteTasksResponseDto => ({ results })),
+        ),
     );
+  }
+
+  private createUserMetadata(userId: number): Metadata {
+    if (!Number.isInteger(userId) || userId < 1) {
+      throw new Error('Authenticated user has an invalid id');
+    }
+
+    const metadata = new Metadata();
+
+    metadata.set(GRPC_USER_ID_METADATA_KEY, userId.toString());
+
+    return metadata;
   }
 }

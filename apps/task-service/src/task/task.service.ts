@@ -50,7 +50,10 @@ export class TaskService {
     private readonly taskRepository: Repository<TaskEntity>,
   ) {}
 
-  async createTask(request: CreateTaskRequest): Promise<CreateTaskResponse> {
+  async createTask(
+    request: CreateTaskRequest,
+    ownerId: number,
+  ): Promise<CreateTaskResponse> {
     const title = request.title?.trim();
 
     if (!title) {
@@ -61,6 +64,7 @@ export class TaskService {
     }
 
     const entity = this.taskRepository.create({
+      ownerId,
       title,
       description: request.description?.trim() || null,
       status: PersistenceTaskStatus.PENDING,
@@ -73,7 +77,7 @@ export class TaskService {
     };
   }
 
-  streamTasks(): Observable<Task> {
+  streamTasks(ownerId: number): Observable<Task> {
     const startedAt = Date.now();
     let sentCount = 0;
 
@@ -81,6 +85,7 @@ export class TaskService {
 
     return defer(() =>
       this.taskRepository.find({
+        where: { ownerId },
         order: {
           createdAt: 'ASC',
         },
@@ -109,6 +114,7 @@ export class TaskService {
 
   updateTaskStatuses(
     requests$: Observable<UpdateTaskStatusRequest>,
+    ownerId: number,
   ): Observable<UpdateTaskStatusesResponse> {
     let receivedCount = 0;
 
@@ -124,13 +130,14 @@ export class TaskService {
       take(MAX_STATUS_UPDATE_BATCH_SIZE + 1),
       toArray(),
       mergeMap(async (requests) => {
-        return this.processTaskStatusUpdates(requests);
+        return this.processTaskStatusUpdates(requests, ownerId);
       }),
     );
   }
 
   private async processTaskStatusUpdates(
     requests: UpdateTaskStatusRequest[],
+    ownerId: number,
   ): Promise<UpdateTaskStatusesResponse> {
     if (requests.length === 0) {
       throw new RpcException({
@@ -198,6 +205,7 @@ export class TaskService {
       .update(TaskEntity)
       .set({ status: persistenceStatus })
       .where('id IN (:...ids)', { ids })
+      .andWhere('owner_id = :ownerId', { ownerId })
       .execute();
 
     const updatedCount = result.affected ?? 0;
@@ -235,6 +243,7 @@ export class TaskService {
 
   deleteTasks(
     requests$: Observable<DeleteTaskRequest>,
+    ownerId: number,
   ): Observable<DeleteTaskResponse> {
     const startedAt = Date.now();
     const processedIds = new Set<number>();
@@ -284,7 +293,7 @@ export class TaskService {
 
         processedIds.add(taskId);
 
-        return defer(() => this.deleteTaskById(taskId)).pipe(
+        return defer(() => this.deleteTaskById(taskId, ownerId)).pipe(
           map((deletedTask): DeleteTaskResponse => {
             if (!deletedTask) {
               return this.createDeleteErrorResponse(
@@ -320,12 +329,16 @@ export class TaskService {
     );
   }
 
-  private async deleteTaskById(id: number): Promise<TaskEntity | undefined> {
+  private async deleteTaskById(
+    id: number,
+    ownerId: number,
+  ): Promise<TaskEntity | undefined> {
     const result = await this.taskRepository
       .createQueryBuilder()
       .delete()
       .from(TaskEntity)
       .where('id = :id', { id })
+      .andWhere('owner_id = :ownerId', { ownerId })
       .returning('*')
       .execute();
 

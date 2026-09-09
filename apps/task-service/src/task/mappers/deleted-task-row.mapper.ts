@@ -3,6 +3,7 @@ import { TaskStatus as PersistenceTaskStatus } from '../enums/task-status.enum';
 
 export interface DeletedTaskRow {
   id: number;
+  owner_id: number;
   title: string;
   description: string | null;
   status: PersistenceTaskStatus;
@@ -14,6 +15,7 @@ export function toTaskEntityFromDeletedRow(row: DeletedTaskRow): TaskEntity {
   const entity = new TaskEntity();
 
   entity.id = row.id;
+  entity.ownerId = row.owner_id;
   entity.title = row.title;
   entity.description = row.description;
   entity.status = row.status;

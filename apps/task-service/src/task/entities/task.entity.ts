@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -12,6 +13,14 @@ import { TaskStatus } from '../enums/task-status.enum';
 export class TaskEntity {
   @PrimaryGeneratedColumn()
   id!: number;
+
+  @Index('IDX_task_owner_id')
+  @Column({
+    name: 'owner_id',
+    type: 'integer',
+    nullable: false,
+  })
+  ownerId!: number;
 
   @Column({
     type: 'varchar',
