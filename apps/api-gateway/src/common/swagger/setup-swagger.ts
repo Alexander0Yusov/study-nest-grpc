@@ -14,6 +14,15 @@ export function setupSwagger(app: INestApplication): void {
     .addTag('Auth')
     .addTag('Tasks')
     .addBearerAuth(undefined, BEARER_ACCESS_STRATEGY_NAME)
+    .addCookieAuth(
+      'refreshToken',
+      {
+        type: 'apiKey',
+        description:
+          'Refresh token передаётся через HttpOnly cookie «refreshToken». Получите cookie через POST /auth/login. Не передавайте refresh token в Authorization header или request body.',
+      },
+      'refresh-token-cookie',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

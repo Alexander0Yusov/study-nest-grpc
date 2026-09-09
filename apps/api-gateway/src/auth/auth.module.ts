@@ -11,6 +11,8 @@ import { AuthService } from './auth.service';
 import { PasswordHasherService } from './infrastructure/crypto/password-hasher.service';
 import { BearerAccessGuard } from './guards/bearer-access/bearer-access.guard';
 import { BearerAccessStrategy } from './guards/bearer-access/bearer-access.strategy';
+import { BearerRefreshGuard } from './guards/bearer-refresh/bearer-refresh.guard';
+import { BearerRefreshStrategy } from './guards/bearer-refresh/bearer-refresh.strategy';
 import {
   ACCESS_TOKEN_JWT_SERVICE,
   REFRESH_TOKEN_JWT_SERVICE,
@@ -29,6 +31,8 @@ import {
     PasswordHasherService,
     BearerAccessStrategy,
     BearerAccessGuard,
+    BearerRefreshStrategy,
+    BearerRefreshGuard,
     {
       provide: ACCESS_TOKEN_JWT_SERVICE,
       useFactory: (config: ConfigType<typeof authConfig>): JwtService =>

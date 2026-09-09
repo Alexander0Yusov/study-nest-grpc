@@ -16,6 +16,7 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConflictResponse,
+  ApiCookieAuth,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
@@ -34,10 +35,16 @@ import { RegisterRequestDto } from './dto/register-request.dto';
 import { RegisterResponseDto } from './dto/register-response.dto';
 import { BEARER_ACCESS_STRATEGY_NAME } from './guards/bearer-access/bearer-access.constants';
 import { BearerAccessGuard } from './guards/bearer-access/bearer-access.guard';
+import { BearerRefreshGuard } from './guards/bearer-refresh/bearer-refresh.guard';
 import { AuthenticatedPrincipal } from './types/authenticated-principal';
+import { RefreshAuthenticatedPrincipal } from './types/refresh-authenticated-principal';
 
 type AuthenticatedFastifyRequest = FastifyRequest & {
   user: AuthenticatedPrincipal;
+};
+
+type RefreshAuthenticatedFastifyRequest = FastifyRequest & {
+  user: RefreshAuthenticatedPrincipal;
 };
 
 @ApiTags('Auth')
@@ -83,13 +90,30 @@ export class AuthController {
   ): Promise<LoginResponseDto> {
     const result = await this.authService.login(dto);
 
-    reply.setCookie(this.config.refreshCookieName, result.refreshToken, {
-      httpOnly: true,
-      secure: this.config.cookieSecure,
-      sameSite: this.config.cookieSameSite,
-      path: this.config.refreshCookiePath,
-      expires: result.refreshExpiresAt,
-    });
+    this.setRefreshCookie(reply, result.refreshToken, result.refreshExpiresAt);
+
+    return { accessToken: result.accessToken };
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(BearerRefreshGuard)
+  @ApiCookieAuth('refresh-token-cookie')
+  @ApiOperation({
+    operationId: 'refreshAccessToken',
+    summary: 'Refresh an access token',
+    description: 'The refresh token is read only from an HttpOnly cookie.',
+  })
+  @ApiOkResponse({ type: LoginResponseDto })
+  @ApiUnauthorizedResponse({ type: GatewayErrorResponseDto })
+  @ApiInternalServerErrorResponse({ type: GatewayErrorResponseDto })
+  public async refresh(
+    @Req() request: RefreshAuthenticatedFastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ): Promise<LoginResponseDto> {
+    const result = await this.authService.refresh(request.user);
+
+    this.setRefreshCookie(reply, result.refreshToken, result.refreshExpiresAt);
 
     return { accessToken: result.accessToken };
   }
@@ -107,5 +131,19 @@ export class AuthController {
     @Req() request: AuthenticatedFastifyRequest,
   ): Promise<RegisterResponseDto> {
     return this.authService.getCurrentUser(request.user);
+  }
+
+  private setRefreshCookie(
+    reply: FastifyReply,
+    refreshToken: string,
+    refreshExpiresAt: Date,
+  ): void {
+    reply.setCookie(this.config.refreshCookieName, refreshToken, {
+      httpOnly: true,
+      secure: this.config.cookieSecure,
+      sameSite: this.config.cookieSameSite,
+      path: this.config.refreshCookiePath,
+      expires: refreshExpiresAt,
+    });
   }
 }
