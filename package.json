@@ -8,6 +8,7 @@
   "scripts": {
     "build": "nest build",
     "start": "nest start",
+    "dev": "pnpm run infra:up && pnpm run build:contracts && concurrently --kill-others-on-fail --names task-service,api-gateway \"pnpm run start:task-service\" \"pnpm run start:api-gateway\"",
     "build:contracts": "nest build contracts",
     "proto:copy-assets": "node scripts/copy-proto-assets.cjs task-service && node scripts/copy-proto-assets.cjs api-gateway",
     "proto:generate": "node scripts/generate-proto.cjs",
@@ -66,6 +67,7 @@
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "concurrently": "^10.0.5",
     "eslint": "^8.0.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
