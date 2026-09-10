@@ -4,8 +4,10 @@ export interface TaskServiceConfig {
   readonly grpcUrl: string;
 }
 
-export function loadTaskServiceConfig(): TaskServiceConfig {
-  const grpcUrl = process.env.TASK_SERVICE_GRPC_URL?.trim() || DEFAULT_GRPC_URL;
+export function loadTaskServiceConfig(
+  environment: NodeJS.ProcessEnv = process.env,
+): TaskServiceConfig {
+  const grpcUrl = environment.TASK_SERVICE_GRPC_URL?.trim() || DEFAULT_GRPC_URL;
 
   const separatorIndex = grpcUrl.lastIndexOf(':');
   const host = grpcUrl.slice(0, separatorIndex);
