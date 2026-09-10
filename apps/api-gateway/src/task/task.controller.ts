@@ -77,6 +77,7 @@ export class TaskController {
   @ApiBody({ type: CreateTaskRequestDto })
   @ApiCreatedResponse({ type: CreateTaskResponseDto })
   @ApiBadRequestResponse({ type: GatewayErrorResponseDto })
+  @ApiUnauthorizedResponse({ type: GatewayErrorResponseDto })
   @ApiServiceUnavailableResponse({ type: GatewayErrorResponseDto })
   @ApiInternalServerErrorResponse({ type: GatewayErrorResponseDto })
   create(
@@ -170,6 +171,7 @@ export class TaskController {
 Gateway receives a finite server stream and returns all received tasks as one HTTP array. An empty gRPC stream produces 200 with items: [].`,
   })
   @ApiOkResponse({ type: GetTasksResponseDto })
+  @ApiUnauthorizedResponse({ type: GatewayErrorResponseDto })
   @ApiServiceUnavailableResponse({ type: GatewayErrorResponseDto })
   @ApiInternalServerErrorResponse({ type: GatewayErrorResponseDto })
   async getTasks(
@@ -197,6 +199,7 @@ Gateway sends one client-stream message per task ID. Task Service performs one b
   @ApiBody({ type: UpdateTaskStatusesRequestDto })
   @ApiOkResponse({ type: UpdateTaskStatusesResponseDto })
   @ApiBadRequestResponse({ type: GatewayErrorResponseDto })
+  @ApiUnauthorizedResponse({ type: GatewayErrorResponseDto })
   @ApiServiceUnavailableResponse({ type: GatewayErrorResponseDto })
   @ApiInternalServerErrorResponse({ type: GatewayErrorResponseDto })
   updateTaskStatuses(
@@ -223,6 +226,7 @@ Gateway exchanges bidirectional gRPC streams. Each incoming ID produces one dele
   @ApiBody({ type: DeleteTasksRequestDto })
   @ApiOkResponse({ type: DeleteTasksResponseDto })
   @ApiBadRequestResponse({ type: GatewayErrorResponseDto })
+  @ApiUnauthorizedResponse({ type: GatewayErrorResponseDto })
   @ApiServiceUnavailableResponse({ type: GatewayErrorResponseDto })
   @ApiInternalServerErrorResponse({ type: GatewayErrorResponseDto })
   deleteTasks(
