@@ -8,11 +8,15 @@ import { TaskService } from './task.service';
 class GrpcClientStub implements ClientGrpc {
   constructor(private readonly service: unknown) {}
 
-  getService<T extends {}>(_name: string): T {
+  getService<T extends NonNullable<unknown>>(name: string): T {
+    void name;
+
     return this.service as T;
   }
 
-  getClientByServiceName<T = unknown>(_name: string): T {
+  getClientByServiceName<T = unknown>(name: string): T {
+    void name;
+
     return this.service as T;
   }
 }

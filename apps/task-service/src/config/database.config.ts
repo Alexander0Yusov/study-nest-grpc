@@ -19,9 +19,6 @@ export const databaseConfig = registerAs('database', () => ({
   port: parseDatabasePort(process.env.TASK_DB_PORT),
   username: process.env.TASK_DB_USERNAME ?? 'study_tasks',
   password: process.env.TASK_DB_PASSWORD ?? 'study_tasks',
-  name: process.env.TASK_DB_NAME ?? 'study_tasks',
+  name: process.env.TASK_DB_NAME ?? 'task_db',
   poolSize: DEFAULT_POOL_SIZE,
-
-  // Учебное локальное решение. Не использовать в production.
-  synchronize: true,
 }));

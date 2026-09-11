@@ -3,6 +3,7 @@ import { ConfigModule, ConfigType } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { databaseConfig } from './config/database.config';
+import { createTaskDataSourceOptions } from './database/task.data-source';
 import { TaskModule } from './task/task.module';
 
 @Module({
@@ -16,15 +17,9 @@ import { TaskModule } from './task/task.module';
     TypeOrmModule.forRootAsync({
       inject: [databaseConfig.KEY],
       useFactory: (config: ConfigType<typeof databaseConfig>) => ({
-        type: config.type,
-        host: config.host,
-        port: config.port,
-        username: config.username,
-        password: config.password,
-        database: config.name,
+        ...createTaskDataSourceOptions(config),
         poolSize: config.poolSize,
-        synchronize: config.synchronize,
-        autoLoadEntities: true,
+        migrationsRun: false,
       }),
     }),
 

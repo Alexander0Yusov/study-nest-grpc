@@ -10,6 +10,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception/http-except
 import { setupSwagger } from './common/swagger/setup-swagger';
 
 import { ConfigType } from '@nestjs/config';
+import { DataSource } from 'typeorm';
 import { appConfig } from './config/app.config';
 
 async function bootstrap() {
@@ -17,6 +18,12 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter(),
   );
+
+  if (process.env.RUN_MIGRATIONS_ONLY === 'true') {
+    await app.get(DataSource).runMigrations({ transaction: 'all' });
+    await app.close();
+    return;
+  }
 
   app.useGlobalPipes(
     new ValidationPipe({

@@ -6,9 +6,9 @@ import { AuthModule } from './auth/auth.module';
 import { authConfig } from './config/auth.config';
 import { databaseConfig } from './config/database.config';
 import { appConfig } from './config/app.config';
+import { createGatewayDataSourceOptions } from './database/gateway.data-source';
 import { SessionModule } from './session/session.module';
 import { TaskModule } from './task/task.module';
-import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -23,17 +23,9 @@ import { UserModule } from './user/user.module';
       useFactory: (
         config: ConfigType<typeof databaseConfig>,
       ): TypeOrmModuleOptions => ({
-        type: config.type,
-        host: config.host,
-        port: config.port,
-        username: config.username,
-        password: config.password,
-        database: config.name,
-        synchronize: config.synchronize,
-        logging: config.logging,
+        ...createGatewayDataSourceOptions(config),
         migrationsRun: false,
         dropSchema: false,
-        autoLoadEntities: true,
       }),
     }),
     TaskModule,

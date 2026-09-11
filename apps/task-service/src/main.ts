@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { DataSource } from 'typeorm';
 
 import { STUDY_TASKS_V1_PACKAGE_NAME } from '@app/contracts';
 
@@ -31,6 +32,12 @@ async function bootstrap(): Promise<void> {
       },
     },
   );
+
+  if (process.env.RUN_MIGRATIONS_ONLY === 'true') {
+    await app.get(DataSource).runMigrations({ transaction: 'all' });
+    await app.close();
+    return;
+  }
 
   app.useGlobalFilters(new RpcExceptionFilter());
 

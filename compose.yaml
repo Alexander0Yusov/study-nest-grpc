@@ -1,22 +1,144 @@
 services:
-  task-postgres:
+  postgres:
     image: postgres:16-alpine
-    container_name: study-task-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${TASK_DB_NAME:-study_tasks}
-      POSTGRES_USER: ${TASK_DB_USERNAME:-study_tasks}
-      POSTGRES_PASSWORD: ${TASK_DB_PASSWORD:-study_tasks}
-    ports:
-      - '${TASK_DB_PORT:-5435}:5432'
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-study_tasks}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-study_tasks}
     volumes:
-      - task-postgres-data:/var/lib/postgresql/data
-      - ./docker/postgres/init/10-create-local-databases.sql:/docker-entrypoint-initdb.d/10-create-local-databases.sql:ro
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d postgres']
       interval: 5s
       timeout: 3s
       retries: 10
 
+  db-init:
+    image: postgres:16-alpine
+    restart: 'no'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-study_tasks}
+      POSTGRES_USER: ${POSTGRES_USER:-study_tasks}
+    volumes:
+      - ./docker/postgres/init/10-create-service-databases.sql:/docker-entrypoint-initdb.d/10-create-service-databases.sql:ro
+    command:
+      [
+        'sh',
+        '-c',
+        'psql -v ON_ERROR_STOP=1 -h postgres -U "$$POSTGRES_USER" -d postgres -f /docker-entrypoint-initdb.d/10-create-service-databases.sql',
+      ]
+
+  gateway-migrations:
+    image: study-nest-grpc-api-gateway:local
+    build:
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
+    restart: 'no'
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      GATEWAY_DB_HOST: postgres
+      GATEWAY_DB_PORT: 5432
+      GATEWAY_DB_USERNAME: ${POSTGRES_USER:-study_tasks}
+      GATEWAY_DB_PASSWORD: ${POSTGRES_PASSWORD:-study_tasks}
+      GATEWAY_DB_NAME: gateway_db
+      GATEWAY_DB_LOGGING: 'false'
+      API_GATEWAY_HOST: 0.0.0.0
+      API_GATEWAY_PORT: 3000
+      GRPC_TASK_SERVICE_HOST: task-service:50051
+      GATEWAY_AUTH_BCRYPT_ROUNDS: 10
+      GATEWAY_AUTH_ACCESS_TOKEN_SECRET: local-docker-access-token-secret
+      GATEWAY_AUTH_REFRESH_TOKEN_SECRET: local-docker-refresh-token-secret
+      GATEWAY_AUTH_ACCESS_TOKEN_TTL_SECONDS: 900
+      GATEWAY_AUTH_REFRESH_TOKEN_TTL_SECONDS: 604800
+      GATEWAY_AUTH_REFRESH_COOKIE_NAME: refreshToken
+      GATEWAY_AUTH_REFRESH_COOKIE_PATH: /auth
+      GATEWAY_AUTH_COOKIE_SECURE: 'false'
+      GATEWAY_AUTH_COOKIE_SAME_SITE: lax
+    command: ['node', 'scripts/run-migrations.cjs', 'api-gateway']
+
+  task-migrations:
+    image: study-nest-grpc-task-service:local
+    build:
+      context: .
+      dockerfile: apps/task-service/Dockerfile
+    restart: 'no'
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      TASK_DB_HOST: postgres
+      TASK_DB_PORT: 5432
+      TASK_DB_USERNAME: ${POSTGRES_USER:-study_tasks}
+      TASK_DB_PASSWORD: ${POSTGRES_PASSWORD:-study_tasks}
+      TASK_DB_NAME: task_db
+      TASK_SERVICE_GRPC_URL: 0.0.0.0:50051
+    command: ['node', 'scripts/run-migrations.cjs', 'task-service']
+
+  task-service:
+    image: study-nest-grpc-task-service:local
+    build:
+      context: .
+      dockerfile: apps/task-service/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      task-migrations:
+        condition: service_completed_successfully
+    environment:
+      TASK_DB_HOST: postgres
+      TASK_DB_PORT: 5432
+      TASK_DB_USERNAME: ${POSTGRES_USER:-study_tasks}
+      TASK_DB_PASSWORD: ${POSTGRES_PASSWORD:-study_tasks}
+      TASK_DB_NAME: task_db
+      TASK_SERVICE_GRPC_URL: 0.0.0.0:50051
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "node -e \"const net = require('node:net'); const socket = net.connect(50051, '127.0.0.1'); socket.once('connect', () => socket.end(() => process.exit(0))); socket.once('error', () => process.exit(1)); setTimeout(() => { socket.destroy(); process.exit(1); }, 2000);\"",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  api-gateway:
+    image: study-nest-grpc-api-gateway:local
+    build:
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      gateway-migrations:
+        condition: service_completed_successfully
+      task-service:
+        condition: service_healthy
+    environment:
+      GATEWAY_DB_HOST: postgres
+      GATEWAY_DB_PORT: 5432
+      GATEWAY_DB_USERNAME: ${POSTGRES_USER:-study_tasks}
+      GATEWAY_DB_PASSWORD: ${POSTGRES_PASSWORD:-study_tasks}
+      GATEWAY_DB_NAME: gateway_db
+      GATEWAY_DB_LOGGING: 'false'
+      API_GATEWAY_HOST: 0.0.0.0
+      API_GATEWAY_PORT: 3000
+      GRPC_TASK_SERVICE_HOST: task-service:50051
+      GATEWAY_AUTH_BCRYPT_ROUNDS: 10
+      GATEWAY_AUTH_ACCESS_TOKEN_SECRET: local-docker-access-token-secret
+      GATEWAY_AUTH_REFRESH_TOKEN_SECRET: local-docker-refresh-token-secret
+      GATEWAY_AUTH_ACCESS_TOKEN_TTL_SECONDS: 900
+      GATEWAY_AUTH_REFRESH_TOKEN_TTL_SECONDS: 604800
+      GATEWAY_AUTH_REFRESH_COOKIE_NAME: refreshToken
+      GATEWAY_AUTH_REFRESH_COOKIE_PATH: /auth
+      GATEWAY_AUTH_COOKIE_SECURE: 'false'
+      GATEWAY_AUTH_COOKIE_SAME_SITE: lax
+    ports:
+      - '3000:3000'
+
 volumes:
-  task-postgres-data:
+  postgres-data:
